@@ -1,0 +1,1 @@
+print("This is the rural_beauty module")
