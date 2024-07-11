@@ -33,7 +33,7 @@ r <- rast(ncol = (xmax - xmin) / resolution,
 v <- vect(input_path)
 
 # Rasterize the vector data onto the raster using the "length" attribute
-y <- rasterize(v, r, field = "length", fun = "sum")
+y <- rasterizeGeom(v, r, "length")
 
 # Save the resulting raster to a file
 writeRaster(y, output_path, overwrite = TRUE)
