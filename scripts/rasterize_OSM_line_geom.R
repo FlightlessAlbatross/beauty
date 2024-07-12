@@ -14,6 +14,10 @@ if (length(args) != 2) {
 input_path <- args[1]
 output_path <- args[2]
 
+if (!file.exists(input_path)) {
+  stop("Input file does not exist")
+}
+
 # Define your own raster specifications
 xmin <- 32280000
 xmax <- 32922000
@@ -38,4 +42,8 @@ y <- rasterizeGeom(v, r, "length")
 # Save the resulting raster to a file
 writeRaster(y, output_path, overwrite = TRUE)
 
-cat("Rasterization complete. Output saved to:", output_path, "\n")
+if (file.exists(output_path)) {
+  cat("Rasterization complete. Output saved to:", output_path, "\n")
+} else {
+  cat("unknown error no output created", "\n")
+}
