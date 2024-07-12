@@ -52,7 +52,9 @@ cache
 
 
 # Data folders for size
-data
+data/*
+!**/.gitkeep
+
 Rpackages
 
 # Byte-compiled / optimized / DLL files
