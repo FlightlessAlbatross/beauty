@@ -13,6 +13,7 @@ def main(clc_path, output_folder):
         "code_flug": 6,
         "code_stgrue": 10,
         "code_spfr": 11,
+        "code_acker": 12,
         "code_wein": 15,
         "code_obst": 16,
         "code_weide": 18,
