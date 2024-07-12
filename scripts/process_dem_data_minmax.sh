@@ -17,9 +17,10 @@ PREDICTOR=2
 TILED="YES"
 
 # Temporary files
-MAX_OUTFILE="EU_DEM_DE_max.tif"
-MIN_OUTFILE="EU_DEM_DE_min.tif"
+MAX_OUTFILE="__deletable_EU_DEM_DE_max.tif"
+MIN_OUTFILE="__deletable_EU_DEM_DE_min.tif"
 
+echo This script produces 2 intermediary files with the prefix __deletable_ in the current directory. They get removed by this script. 
 # Step 1: Generate Maximum Values Raster
 gdalwarp -te $WEST $SOUTH $EAST $NORTH -te_srs $EPSG_CODE -tap -tr $PIXEL_SIZE $PIXEL_SIZE -t_srs $EPSG_CODE -ot $OUTPUT_TYPE -r max -co "TILED=$TILED" $INFILE $MAX_OUTFILE
 
