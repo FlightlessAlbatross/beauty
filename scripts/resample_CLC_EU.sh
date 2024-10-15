@@ -44,7 +44,7 @@ for raster in "$DIR"/*.tif; do
     fi
 
     # Run gdalwarp to resample the raster to 1000x1000 using mean aggregation
-    gdalwarp -te 32280000 5235000 32922000 6102000 -te_srs "EPSG:4647" -tap -tr 1000 1000 -t_srs "EPSG:4647" -ot float64 -r average $( [ "$overwrite" -eq 1 ] && echo "-overwrite" ) "$raster" "$out_raster"
+    gdalwarp -te 28929820 3125857 35822750 8343990 -te_srs "EPSG:4647" -tap -tr 1000 1000 -t_srs "EPSG:4647" -ot float64 -r average $( [ "$overwrite" -eq 1 ] && echo "-overwrite" ) "$raster" "$out_raster"
 done
 
 echo "Resampling complete."
