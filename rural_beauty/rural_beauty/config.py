@@ -65,9 +65,13 @@ heme2012_DE_repojected = data_dir / 'cleaned' / 'hemerobie_IOER' / 'heme2012.tif
 #auxiliary data
 ## NUTS
 NUTS_DE = data_dir / 'cleaned' / 'NUTS' / 'DE.geojson'
-
+NUTS_EU = data_dir / 'cleaned' / 'NUTS' / 'EU.geojson'
 
 # modeling data
 predictors_DE = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'predictors.csv'
 beauty_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'beauty.csv'
 coords_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'coords.csv'
+
+predictors_EU = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'EU' / 'predictors.csv'
+beauty_EU     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'EU' / 'beauty.csv'
+coords_EU     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'EU' / 'coords.csv'
