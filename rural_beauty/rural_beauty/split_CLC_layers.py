@@ -79,7 +79,7 @@ def main(clc_path, output_folder):
 
             # Check if label is not in relevant_4_beauty
             if label not in relevant_4_beauty:
-                continue
+                pass
 
             if isinstance(values, list):
                 for value in values:
