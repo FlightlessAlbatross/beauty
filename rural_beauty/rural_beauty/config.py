@@ -59,3 +59,15 @@ windpower_EU_raster = data_dir / 'cleaned' / 'osm' / 'freq_windpowerplants_EU_46
 ## Hemerobie Index by IOER
 heme2012_DE = data_dir / 'raw' / 'hemerobie_IOER' / 'heme2012.tif'
 heme2012_DE_repojected = data_dir / 'cleaned' / 'hemerobie_IOER' / 'heme2012.tif'
+
+
+
+#auxiliary data
+## NUTS
+NUTS_DE = data_dir / 'cleaned' / 'NUTS' / 'DE.geojson'
+
+
+# modeling data
+predictors_DE = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'predictors.csv'
+beauty_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'beauty.csv'
+coords_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'coords.csv'

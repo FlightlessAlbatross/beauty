@@ -8,3 +8,10 @@ The rural_beauty python module is mostly there to contain the data paths in the 
 to be able to use the imports go to the folder containing the setup.py file and run this line 
 pip install -e .
 
+
+
+Run the notebooks of the notebook folder in order. For the most part they call scripts in the scripts folder or call functions in the python module.
+The rural_beauty python module is mostly there to contain the data paths in the config file and only some custom functions.
+
+to be able to use the imports go to the folder containing the setup.py file and run this line
+pip install -e .
