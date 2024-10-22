@@ -9,6 +9,14 @@ data_dir = package_dir.parent / 'data'
 
 
 # input data
+## Protected areas
+protected0 = data_dir /  'raw'/ 'protected' / 'WDPA_Oct2024_Public_shp_0/WDPA_Oct2024_Public_shp-polygons.shp'
+protected1 = data_dir /  'raw'/ 'protected' / 'WDPA_Oct2024_Public_shp_1/WDPA_Oct2024_Public_shp-polygons.shp'
+protected2 = data_dir /  'raw'/ 'protected' / 'WDPA_Oct2024_Public_shp_2/WDPA_Oct2024_Public_shp-polygons.shp'
+
+protected_EU = data_dir / 'processed' / 'protected' /  'WDPA_merged_4647.shp'
+protected_raster = data_dir / 'cleaned' / 'protected' / 'WDPA_area.tif'
+
 ## Landschaftsbild / Ratings from the German Project
 bild_vector_dir = data_dir / 'raw' / 'landschaftsbild'
 bild_raster_dir = data_dir / 'cleaned' / 'landschaftsbild'

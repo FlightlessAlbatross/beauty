@@ -1,11 +1,18 @@
 #!/bin/bash
 
-#TODO: all the paths are hardcoded. This should be incorporated into the config scheme. 
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 <path_to_shp0> <path_to_shp1> <path_to_shp2> <output_tif>"
+    exit 1
+fi
 
-# Define input shapefiles
-shp0="data/raw/protected/WDPA_Oct2024_Public_shp_0/WDPA_Oct2024_Public_shp-polygons.shp"
-shp1="data/raw/protected/WDPA_Oct2024_Public_shp_1/WDPA_Oct2024_Public_shp-polygons.shp"
-shp2="data/raw/protected/WDPA_Oct2024_Public_shp_2/WDPA_Oct2024_Public_shp-polygons.shp"
+# Input arguments
+shp0="$1"
+shp1="$2"
+shp2="$3"
+output_tif="$4"
+
+output_epsg=4647
 
 # Define output paths for intermediate results
 subset0="data/processed/protected/WDPA0.shp"
