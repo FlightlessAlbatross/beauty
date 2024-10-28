@@ -21,8 +21,8 @@ protected_raster = data_dir / 'cleaned' / 'protected' / 'WDPA_area.tif'
 bild_vector_dir = data_dir / 'raw' / 'landschaftsbild'
 bild_raster_dir = data_dir / 'cleaned' / 'landschaftsbild'
 beauty_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'schoenheit_DE.tif'
-unique_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'unique_DE.tif'
-diverse_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'diverse_DE.tif'
+unique_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'eigenart_DE.tif'
+diverse_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'vielfalt_DE.tif'
 
 ## Corine Land Cover
 CLC_EU = data_dir / 'raw' / 'clc' / 'U2018_CLC2018_V2020_20u1.tif'
@@ -52,7 +52,7 @@ OSM_full_EU = data_dir / 'raw' / 'osm' / 'europe-latest.osm.pbf'
 powerlines_DE_vector = data_dir / 'processed' / 'osm' / 'powerlines_DE_4647.geojson'
 powerlines_DE_raster = data_dir / 'cleaned' / 'osm' / 'len_powerlines_DE_4647.tif'
 powerlines_EU_vector = data_dir / 'processed' / 'osm' / 'powerlines_EU_4647.geojson'
-powerlines_EU_raster = data_dir / 'cleaned' / 'osm' / 'powerlines_EU_4647.tif'
+powerlines_EU_raster = data_dir / 'cleaned' / 'osm' / 'len_powerlines_EU_4647.tif'
 
 ### streets
 streets_DE_vector = data_dir / 'processed' / 'osm' / 'streets_DE_4647.geojson'
@@ -79,9 +79,9 @@ NUTS_EU = data_dir / 'cleaned' / 'NUTS' / 'EU.geojson'
 
 # modeling data
 predictors_DE = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'predictors.csv'
-beauty_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'beauty.csv'
-coords_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'coords.csv'
+outcome_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'outcome.csv'
+# beauty_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'beauty.csv'
+# unique_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'unique.csv'
+# diverse_DE    = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'diverse.csv'
 
-predictors_EU = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'EU' / 'predictors.csv'
-beauty_EU     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'EU' / 'beauty.csv'
-coords_EU     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'EU' / 'coords.csv'
+coords_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'coords.csv'
