@@ -21,6 +21,8 @@ protected_raster = data_dir / 'cleaned' / 'protected' / 'WDPA_area.tif'
 bild_vector_dir = data_dir / 'raw' / 'landschaftsbild'
 bild_raster_dir = data_dir / 'cleaned' / 'landschaftsbild'
 beauty_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'schoenheit_DE.tif'
+unique_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'unique_DE.tif'
+diverse_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'diverse_DE.tif'
 
 ## Corine Land Cover
 CLC_EU = data_dir / 'raw' / 'clc' / 'U2018_CLC2018_V2020_20u1.tif'
