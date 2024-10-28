@@ -85,3 +85,61 @@ outcome_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'outc
 # diverse_DE    = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'diverse.csv'
 
 coords_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'coords.csv'
+
+
+# included features from the BFN (Bundesamt fuer Naturschutz) Beauty source (data_dir / raw/landschaftsbild/BfN*.pdf)
+
+BFN_features_beauty = {
+ 'dem_1_2'  : data_dir / 'cleaned/dem/neighborhood/DEM_EU_range_zone1_2.tif',
+ 'dem_3_4'  : data_dir / 'cleaned/dem/neighborhood/DEM_EU_range_zone3_4.tif', 
+ 'obst_1_4' : CLC_coverage_EU_dir / 'neighborhood/code_obst_zone1_4.tif',
+ 'wald_1_4' : CLC_coverage_EU_dir / 'neighborhood/code_wald_zone1_4.tif',
+ 'natgru_2' : CLC_coverage_EU_dir / 'neighborhood/code_natgru_zone2.tif',
+ 'acker_1_4': CLC_coverage_EU_dir / 'neighborhood/code_acker_zone1_4.tif',
+ 'stoer_1'  : CLC_coverage_EU_dir / 'code_stoer.tif',
+ 'stoer_2'  : CLC_coverage_EU_dir / 'neighborhood/code_stoer_zone2.tif',
+ 'stoer_3'  : CLC_coverage_EU_dir / 'neighborhood/code_stoer_zone3.tif',
+ 'noveg_2'  : CLC_coverage_EU_dir / 'neighborhood/code_noveg_zone2.tif', 
+ 'seemee_1' : CLC_coverage_EU_dir / 'code_seemee.tif',
+ 'spfr_1'   : CLC_coverage_EU_dir / 'code_spfr.tif',
+ 'heide_1'  : CLC_coverage_EU_dir / 'code_heide.tif',
+ 'weanl_1_4': data_dir / 'cleaned/osm/neighborhood/freq_windpowerplants_EU_4647_zone1_4.tif', 
+ 'stra_1_2' : data_dir / 'cleaned/osm/neighborhood/len_streets_EU_4647_zone1_2.tif', 
+ 'leit_1'   : powerlines_EU_raster, 
+ 'hemero_1' : heme2012_DE_repojected
+           }
+
+
+BFN_features_unique = {
+ 'dem_1'      : data_dir / 'cleaned/dem/DEM_EU_range.tif',
+ 'dem_3'      : data_dir / 'cleaned/dem/neighborhood/DEM_EU_range_zone3.tif',
+ 'seemee_1'   : CLC_coverage_EU_dir / 'code_seemee.tif',
+ 'heide_1'    : CLC_coverage_EU_dir / 'code_heide.tif',
+ 'sgall_1'    : data_dir / protected_raster,
+ 'natgru_1_2' : CLC_coverage_EU_dir / 'neighborhood/code_natgru_zone1_2.tif',
+ 'wein_1'     : CLC_coverage_EU_dir / 'code_wein.tif', 
+ 'acker_1_2'  : CLC_coverage_EU_dir / 'neighborhood/code_acker_zone1_2.tif',
+ 'stoer_1_2'  : CLC_coverage_EU_dir / 'neighborhood/code_stoer_zone1_2.tif',
+ 'stra_1'     : data_dir / 'cleaned/osm/len_streets_EU_4647.tif', 
+ 'leit_1'     : data_dir / 'cleaned/osm/len_powerlines_EU_4647.tif'
+           }
+
+
+# incomplete: missing Diversity scores. 
+BFN_features_diverse = {
+ 'dem_1'    : data_dir / 'cleaned/dem/DEM_EU_range.tif',
+ 'dem_2'    : data_dir / 'cleaned/dem/neighborhood/DEM_EU_range_zone2.tif',
+ 'dem_3'    : data_dir / 'cleaned/dem/neighborhood/DEM_EU_range_zone3.tif',
+ 'seemee_1' : CLC_coverage_EU_dir / 'code_seemee.tif',
+ 'wald_1'   : CLC_coverage_EU_dir / 'code_wald.tif',
+ 'natgru_2' : CLC_coverage_EU_dir / 'neighborhood/code_natgru_zone_2.tif',
+ 'obst_1_4' : CLC_coverage_EU_dir / 'neighborhood/code_obst_zone_1_4.tif',
+ 'stoer_1_2': CLC_coverage_EU_dir / 'neighborhood/code_stoer_zone1_2.tif',
+ 'hemero_1' : heme2012_DE_repojected, 
+ 'stra_1_2' : data_dir / 'cleaned/osm/neighborhood/len_streets_EU_4647_zone_1_2.tif', 
+ 'acker_1_4': CLC_coverage_EU_dir / 'neighborhood/code_acker_zone1_4.tif',
+ 'noveg_2'  : CLC_coverage_EU_dir / 'neighborhood/code_noveg_zone_2.tif', 
+ 'leit_1'   : data_dir / 'cleaned/osm/neighborhood/len_powerlines_EU_4647_zone_1_2.tif'
+ }
+
+
