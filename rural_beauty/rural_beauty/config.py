@@ -78,13 +78,13 @@ NUTS_DE = data_dir / 'cleaned' / 'NUTS' / 'DE.geojson'
 NUTS_EU = data_dir / 'cleaned' / 'NUTS' / 'EU.geojson'
 
 # modeling data
-predictors_DE = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'predictors.csv'
-outcome_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'outcome.csv'
-# beauty_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'beauty.csv'
-# unique_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'unique.csv'
-# diverse_DE    = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'diverse.csv'
+predictors_DE = data_dir / 'models' / '_rnd_points' / 'DE' / 'predictors.csv'
+outcome_DE    = data_dir  / 'models' / '_rnd_points' / 'DE' / 'outcome.csv'
+coords_DE     = data_dir /  'models' / '_rnd_points' / 'DE' / 'coords.csv'
+feature_paths = data_dir /  'models' / '_rnd_points' / 'DE' / 'feature_paths.json'
 
-coords_DE     = data_dir / 'cleaned' / 'modeling' / 'rnd_points' / 'DE' / 'coords.csv'
+# here we will save random points, model pkl mean and sd of how we scaled the input data, so we can replicate it for predictions
+models_dir  = data_dir / 'models'
 
 
 # included features from the BFN (Bundesamt fuer Naturschutz) Beauty source (data_dir / raw/landschaftsbild/BfN*.pdf)
@@ -142,4 +142,18 @@ BFN_features_diverse = {
  'leit_1'   : data_dir / 'cleaned/osm/neighborhood/len_powerlines_EU_4647_zone_1_2.tif'
  }
 
-
+# these are the beta coefs
+BFN_coefs_unique = {
+  'dem_1'      : 0.164,
+  'dem_3'      : 0.392,
+  'seemee_1'   : 0.202,
+  'heide_1'    : 0.166,
+  'sgall_1'    : 0.108,
+  'natgru_1_2' : 0.080,
+  'wein_1'     : 0.054,
+  'acker_1_2'  :-0.199,
+  'stoer_1_2'  :-0.184,
+  'stra_1'     :-0.142,
+  'leit_1'     :-0.070,
+}
+BFN_constant_unique = 0
