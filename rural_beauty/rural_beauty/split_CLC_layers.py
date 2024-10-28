@@ -79,6 +79,7 @@ def main(clc_path, output_folder):
 
             # Check if label is not in relevant_4_beauty
             if label not in relevant_4_beauty:
+                # this gets ignored right now. Change this to 'continue' from 'next' if you want only the listed layers. 
                 pass
 
             if isinstance(values, list):
