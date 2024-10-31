@@ -15,7 +15,9 @@ protected1 = data_dir /  'raw'/ 'protected' / 'WDPA_Oct2024_Public_shp_1/WDPA_Oc
 protected2 = data_dir /  'raw'/ 'protected' / 'WDPA_Oct2024_Public_shp_2/WDPA_Oct2024_Public_shp-polygons.shp'
 
 protected_EU = data_dir / 'processed' / 'protected' /  'WDPA_merged_4647.shp'
-protected_raster = data_dir / 'cleaned' / 'protected' / 'WDPA_area.tif'
+protected_raster = data_dir / 'processed' / 'protected' / 'WDPA_area.tif'
+protected_raster_scaled = data_dir / 'cleaned' / 'protected' / 'WDPA_area_scaled.tif'
+
 
 ## Landschaftsbild / Ratings from the German Project
 bild_vector_dir = data_dir / 'raw' / 'landschaftsbild'
@@ -53,18 +55,18 @@ OSM_full_EU = data_dir / 'raw' / 'osm' / 'europe-latest.osm.pbf'
 ### Powerlines
 powerlines_DE_vector = data_dir / 'processed' / 'osm' / 'powerlines_DE_4647.geojson'
 powerlines_DE_raster = data_dir / 'processed' / 'osm' / 'len_powerlines_DE_4647.tif'
+
 powerlines_EU_vector = data_dir / 'processed' / 'osm' / 'powerlines_EU_4647.geojson'
 powerlines_EU_raster = data_dir / 'processed' / 'osm' / 'len_powerlines_EU_4647.tif'
-
 powerlines_EU_raster_scaled = data_dir / 'cleaned' / 'osm' / 'len_scaled_powerlines_EU_4647.tif'
 
 
 ### streets
 streets_DE_vector = data_dir / 'processed' / 'osm' / 'streets_DE_4647.geojson'
 streets_DE_raster = data_dir / 'processed' / 'osm' / 'len_streets_DE_4647.tif'
+
 streets_EU_vector = data_dir / 'processed' / 'osm' / 'streets_EU_4647.geojson'
 streets_EU_raster = data_dir / 'processed' / 'osm' / 'len_streets_EU_4647.tif'
-
 streets_EU_raster_scaled = data_dir / 'cleaned' / 'osm' / 'len_scaled_streets_EU_4647.tif'
 
 ### windpower
@@ -125,7 +127,7 @@ BFN_features_unique = {
  'dem_3'      : data_dir / 'cleaned/dem/neighborhood/DEM_EU_range_scaled_zone3.tif',
  'seemee_1'   : CLC_coverage_EU_dir / 'code_seemee.tif',
  'heide_1'    : CLC_coverage_EU_dir / 'code_heide.tif',
- 'sgall_1'    : data_dir / protected_raster,
+ 'sgall_1'    : data_dir / protected_raster_scaled,
  'natgru_1_2' : CLC_coverage_EU_dir / 'neighborhood/code_natgru_zone1_2.tif',
  'wein_1'     : CLC_coverage_EU_dir / 'code_wein.tif', 
  'acker_1_2'  : CLC_coverage_EU_dir / 'neighborhood/code_acker_zone1_2.tif',
