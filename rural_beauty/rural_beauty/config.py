@@ -39,8 +39,10 @@ CLC_coverage_EU_dir = data_dir / 'cleaned' / 'clc' / 'layer_coverage_EU'
 ### Raw Elevation Data
 DEM_EU = data_dir / 'raw' / 'dem'/ 'EU_DEM_EU.tif'
 ### 1x1km Germany max - min elevation
-DEM_DE_range = data_dir / 'cleaned' / 'dem' / 'DEM_DE_range.tif'
-DEM_EU_range = data_dir / 'cleaned' / 'dem' / 'DEM_EU_range.tif'
+DEM_DE_range = data_dir / 'processed' / 'dem' / 'DEM_DE_range.tif'
+DEM_EU_range = data_dir / 'processed' / 'dem' / 'DEM_EU_range.tif'
+DEM_EU_range_scaled = data_dir / 'cleaned' / 'dem' / 'DEM_EU_range_scaled.tif'
+DEM_DE_range_scaled = data_dir / 'cleaned' / 'dem' / 'DEM_DE_range_scaled.tif'
 
 ##OSM
 ### Geofabrik Germany
@@ -50,21 +52,29 @@ OSM_full_EU = data_dir / 'raw' / 'osm' / 'europe-latest.osm.pbf'
 
 ### Powerlines
 powerlines_DE_vector = data_dir / 'processed' / 'osm' / 'powerlines_DE_4647.geojson'
-powerlines_DE_raster = data_dir / 'cleaned' / 'osm' / 'len_powerlines_DE_4647.tif'
+powerlines_DE_raster = data_dir / 'processed' / 'osm' / 'len_powerlines_DE_4647.tif'
 powerlines_EU_vector = data_dir / 'processed' / 'osm' / 'powerlines_EU_4647.geojson'
-powerlines_EU_raster = data_dir / 'cleaned' / 'osm' / 'len_powerlines_EU_4647.tif'
+powerlines_EU_raster = data_dir / 'processed' / 'osm' / 'len_powerlines_EU_4647.tif'
+
+powerlines_EU_raster_scaled = data_dir / 'cleaned' / 'osm' / 'len_scaled_powerlines_EU_4647.tif'
+
 
 ### streets
 streets_DE_vector = data_dir / 'processed' / 'osm' / 'streets_DE_4647.geojson'
-streets_DE_raster = data_dir / 'cleaned' / 'osm' / 'len_streets_DE_4647.tif'
+streets_DE_raster = data_dir / 'processed' / 'osm' / 'len_streets_DE_4647.tif'
 streets_EU_vector = data_dir / 'processed' / 'osm' / 'streets_EU_4647.geojson'
-streets_EU_raster = data_dir / 'cleaned' / 'osm' / 'len_streets_EU_4647.tif'
+streets_EU_raster = data_dir / 'processed' / 'osm' / 'len_streets_EU_4647.tif'
+
+streets_EU_raster_scaled = data_dir / 'cleaned' / 'osm' / 'len_scaled_streets_EU_4647.tif'
 
 ### windpower
 windpower_DE_vector = data_dir / 'processed' / 'osm' / 'windpowerplants_DE_4647.geojson'
-windpower_DE_raster = data_dir / 'cleaned' / 'osm' / 'freq_windpowerplants_DE_4647.tif'
+windpower_DE_raster = data_dir / 'processed' / 'osm' / 'freq_windpowerplants_DE_4647.tif'
 windpower_EU_vector = data_dir / 'processed' / 'osm' / 'windpowerplants_EU_4647.geojson'
-windpower_EU_raster = data_dir / 'cleaned' / 'osm' / 'freq_windpowerplants_EU_4647.tif'
+windpower_EU_raster = data_dir / 'processed' / 'osm' / 'freq_windpowerplants_EU_4647.tif'
+
+windpower_EU_raster_scaled = data_dir / 'cleaned' / 'osm' / 'freq_scaled_windpowerplants_EU_4647.tif'
+
 
 ## Hemerobie Index by IOER
 heme2012_DE = data_dir / 'raw' / 'hemerobie_IOER' / 'heme2012.tif'
