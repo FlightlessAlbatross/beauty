@@ -28,31 +28,38 @@ resolution <- 1000  # Pixel size
 crs <- "EPSG:4647"
 
 # Create an empty raster with the specified extent, resolution, and CRS
-r <- rast(ncol = (xmax - xmin) / resolution, 
-          nrow = (ymax - ymin) / resolution, 
-          xmin = xmin, xmax = xmax, 
-          ymin = ymin, ymax = ymax, 
-          crs = crs)
+if (!file.exists(intermediary_path)) {
+  r <- rast(ncol = (xmax - xmin) / resolution,
+            nrow = (ymax - ymin) / resolution,
+            xmin = xmin, xmax = xmax,
+            ymin = ymin, ymax = ymax,
+            crs = crs)
 
-# Load the vector data
-v <- vect(input_path)
-print(paste0("Loaded OSM vector data:", input_path))
+  # Load the vector data
+  v <- vect(input_path)
+  print(paste0("Loaded OSM vector data:", input_path))
 
-# Rasterize the vector data onto the raster using the "length" attribute
-y <- rasterizeGeom(v, r, "length")
-print("Rasterizing done")
+  # Rasterize the vector data onto the raster using the "length" attribute
 
-writeRaster(y, intermediary_path, overwrite = TRUE)
+  y <- rasterizeGeom(v, r, "length")
+  writeRaster(y, intermediary_path)
+  print("Rasterizing done")
+} else {
+  y <- rast(intermediary_path)
+}
 
-y_norm <- y / max(y)
-print("Normalizing done")
+max_length <- as.numeric(global(y, max, na.rm = TRUE))
+print(paste0("The maximum length of any pixel is ", max_length))
+
+
+y_norm <- y / max_length
+print("Scaling done. Write to disc....")
 
 # Save the resulting raster to a file
-writeRaster(y_norm, output_path, overwrite = TRUE)
-
+writeRaster(y_norm, output_path)
 
 if (file.exists(output_path)) {
-  cat("Rasterization complete. Output saved to:", output_path, "\n")
+  cat("Rasterization and scaling complete. Output saved to:", output_path, "\n")
 } else {
   cat("unknown error no output created", "\n")
 }
