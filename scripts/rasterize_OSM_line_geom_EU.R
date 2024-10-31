@@ -7,12 +7,13 @@ library(terra)
 args <- commandArgs(trailingOnly = TRUE)
 
 # Check if correct number of arguments is provided
-if (length(args) != 2) {
-  stop("Please provide input vector path and output raster path as arguments.")
+if (length(args) != 3) {
+  stop("args: <input_OSM> <intermediary_length_raster> <scaled_length_raster>")
 }
 
 input_path <- args[1]
-output_path <- args[2]
+intermediary_path <-  args[2]
+output_path <- args[3]
 
 if (!file.exists(input_path)) {
   stop("Input file does not exist")
@@ -39,11 +40,16 @@ print(paste0("Loaded OSM vector data:", input_path))
 
 # Rasterize the vector data onto the raster using the "length" attribute
 y <- rasterizeGeom(v, r, "length")
-print('Rasterizing done')
+print("Rasterizing done")
 
+writeRaster(y, intermediary_path, overwrite = TRUE)
+
+y_norm <- y / max(y)
+print("Normalizing done")
 
 # Save the resulting raster to a file
-writeRaster(y, output_path, overwrite = TRUE)
+writeRaster(y_norm, output_path, overwrite = TRUE)
+
 
 if (file.exists(output_path)) {
   cat("Rasterization complete. Output saved to:", output_path, "\n")
