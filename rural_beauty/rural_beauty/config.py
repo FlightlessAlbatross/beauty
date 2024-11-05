@@ -30,7 +30,7 @@ diverse_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'vielfalt_DE.tif'
 ## UK data
 UK_scenic_raw    = data_dir / "raw"       / "scenicornot" / "votes.tsv"
 UK_scenic_points = data_dir / "processed" / "scenicornot" / "scenic.geojson"
-UK_scenic_raster = data_dir / "cleaned"   / "scenicornot" / "scenic.tif"
+UK_scenic_raster = data_dir / "processed"   / "scenicornot" / "scenic.tif"
 
 
 ## Corine Land Cover
@@ -95,6 +95,7 @@ heme2012_DE_repojected = data_dir / 'cleaned' / 'hemerobie_IOER' / 'heme2012.tif
 ## NUTS
 NUTS_DE = data_dir / 'cleaned' / 'NUTS' / 'DE.geojson'
 NUTS_EU = data_dir / 'cleaned' / 'NUTS' / 'EU.geojson'
+NUTS_UK = data_dir / 'cleaned' / 'NUTS' / 'UK_without_NI.geojson'
 
 # modeling data
 
@@ -104,12 +105,12 @@ models_dir  = data_dir / 'models'
 predictors_DE = models_dir / '_rnd_points' / 'DE' / 'predictors.csv'
 outcome_DE    = models_dir / '_rnd_points' / 'DE' / 'outcome.csv'
 coords_DE     = models_dir / '_rnd_points' / 'DE' / 'coords.csv'
-feature_paths = models_dir / '_rnd_points' / 'DE' / 'feature_paths.json'
+feature_paths_DE = models_dir / '_rnd_points' / 'DE' / 'feature_paths.json'
 
 predictors_UK = models_dir / '_rnd_points' / 'UK' / 'predictors.csv'
 outcome_UK    = models_dir / '_rnd_points' / 'UK' / 'outcome.csv'
 coords_UK     = models_dir / '_rnd_points' / 'UK' / 'coords.csv'
-feature_paths = models_dir / '_rnd_points' / 'UK' / 'feature_paths.json'
+feature_paths_UK = models_dir / '_rnd_points' / 'UK' / 'feature_paths.json'
 
 
 
