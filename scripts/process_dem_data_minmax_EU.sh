@@ -22,6 +22,7 @@ OUTPUT_TYPE="Float64"
 COMPRESS="LZW"
 PREDICTOR=2
 TILED="YES"
+NODATA_VALUE=-99
 
 # Directory for intermediary files
 INTERMEDIARY_DIR=$(dirname "$INTERMEDIARY")
@@ -53,7 +54,7 @@ fi
 # Step 3: Calculate the Range
 if [ ! -f "$INTERMEDIARY" ]; then
     echo "Generating difference between min and max values raster..."
-    gdal_calc.py -A $MAX_OUTFILE -B $MIN_OUTFILE --outfile=$INTERMEDIARY --calc="A-B" --type=$OUTPUT_TYPE
+    gdal_calc.py -A $MAX_OUTFILE -B $MIN_OUTFILE --outfile=$INTERMEDIARY --calc="A-B" --type=$OUTPUT_TYPE --NoDataValue=$NODATA_VALUE
 else
     echo "$INTERMEDIARY already exists. Skipping generation."
 fi
@@ -74,7 +75,8 @@ echo "Maximum Range: $MAX_RANGE"
 # Step 5: Normalize the Range to 0-1 by dividing by the maximum value
 if [ ! -f "$RANGE_OUTFILE" ]; then
     echo "Generating scaled (0,1) output to $RANGE_OUTFILE"
-    gdal_translate -scale 0 $MAX_RANGE 0 1 $INTERMEDIARY $RANGE_OUTFILE
+    gdal_translate -scale 0 $MAX_RANGE 0 1 -a_nodata $NODATA_VALUE $INTERMEDIARY $RANGE_OUTFILE
+
 else
     echo "$RANGE_OUTFILE already exists. Skipping generation."
 fi

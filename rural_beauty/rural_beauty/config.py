@@ -137,6 +137,7 @@ BFN_features_beauty = {
  'hemero_1' : heme2012_DE_repojected
            }
 
+BFN_features_scenic = BFN_features_beauty
 
 BFN_features_unique = {
  'dem_1'      : DEM_EU_range_scaled,
