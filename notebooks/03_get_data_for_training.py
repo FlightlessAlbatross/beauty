@@ -60,30 +60,25 @@ def main(country: str, target_variable: str, sampling_method: str, overwrite:boo
     check_input_paths(features)
 
     # extract outcome based on parameters target_variable and country/polygon
-    if country == 'DE':
-        if sampling_method == 'all_pixels':
+    match (country, sampling_method):
+        case ('DE', 'all_pixels'):
             extraction_points, outcome_values = extract_all_raster_values_within_polygon(outcome_raster, polygon)
-
-        if sampling_method == 'random_pixels':
+        case ('DE', 'random_pixels'):
             extraction_points, outcome_values = extract_random_raster_values_within_polygon(raster_path=outcome_raster, num_points= 1000, polygon=polygon)
-            
-
-    elif country == 'UK':
-        from rural_beauty.config import UK_scenic_points
-        if sampling_method == 'pooled_pixels_all_points':
+        case ('UK', 'pooled_pixels_all_points'):
+            from rural_beauty.config import UK_scenic_points
             coords_gdf = gpd.read_file(UK_scenic_points)
-            extraction_points = np.array([(x, y) for x, y in zip(coords_gdf.geometry.x, coords_gdf.geometry.y)])
+            extraction_points = np.array([Point(x, y) for x, y in zip(coords_gdf.geometry.x, coords_gdf.geometry.y)])
+
+            print(f"DEBUG:{type(extraction_points)}")
+
             outcome_values = extract_raster_values_from_points(outcome_raster, extraction_points)
-            
-
-    elif country == 'DEUK':
-        print('not yet implemented')
-        pass
-
-    else:
-        raise ValueError('unavailable options of country + sampling_method. Default is DE all_pixels or UK pooled_pixels_all_points' )
-
-
+        case ("DEUK", _):
+            raise ValueError('DEUK extraction is not yet implemented')
+        case _:
+            raise ValueError('unavailable options of country + sampling_method. Default is DE all_pixels or UK pooled_pixels_all_points' )
+    
+    
     # extract features for the same locations. 
     predictors_dict = {}
     for label, path in features.items():
