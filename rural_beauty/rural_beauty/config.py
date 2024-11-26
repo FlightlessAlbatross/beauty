@@ -102,9 +102,9 @@ NUTS_UK = data_dir / 'cleaned' / 'NUTS' / 'UK_without_NI.geojson'
 # here we will save random points, model pkl mean and sd of how we scaled the input data, so we can replicate it for predictions
 models_dir  = data_dir / 'models'
 
-predictors_DE = models_dir / '_rnd_points' / 'DE' / 'predictors.csv'
-outcome_DE    = models_dir / '_rnd_points' / 'DE' / 'outcome.csv'
-coords_DE     = models_dir / '_rnd_points' / 'DE' / 'coords.csv'
+predictors_DE    = models_dir / '_rnd_points' / 'DE' / 'predictors.csv'
+outcome_DE       = models_dir / '_rnd_points' / 'DE' / 'outcome.csv'
+coords_DE        = models_dir / '_rnd_points' / 'DE' / 'coords.csv'
 feature_paths_DE = models_dir / '_rnd_points' / 'DE' / 'feature_paths.json'
 
 predictors_UK = models_dir / '_rnd_points' / 'UK' / 'predictors.csv'
