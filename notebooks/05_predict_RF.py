@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import numpy as np
 import os
-
+from xgboost import XGBClassifier
 from rasterio.transform import from_origin
 from rasterio.crs import CRS
 from rasterio.features import geometry_mask
@@ -221,6 +221,7 @@ def main(country, sugar):
 
     output_raster_path = model_folder / 'prediction.tif'
 
+    # TODO change to from config import NUTS_EU
     boundary_gpd_path = data_dir / 'cleaned' / 'NUTS' / 'EU_main.geojson'
 
 
