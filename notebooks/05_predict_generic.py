@@ -1,41 +1,36 @@
-import argparse
-import rasterio
-import joblib
-import pandas as pd
-import json
-from pathlib import Path
+
+
 import numpy as np
+import pandas as pd
+import geopandas as gpd
+import json
 import os
+from pathlib import Path
+import argparse
+# import importlib
+
+# various ML models. 
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier, plot_tree
 from xgboost import XGBClassifier
+from sklearn import svm
+import joblib
+
+
+import rasterio
 from rasterio.transform import from_origin
 from rasterio.crs import CRS
 from rasterio.features import geometry_mask
 
-import geopandas as gpd
+
 
 
 # model specific info
 from rural_beauty.config import data_dir, models_dir, get_extracted_points_paths
-import importlib
+
 
 
 from rasterio.warp import calculate_default_transform, reproject, Resampling
-
-
-def print_tif_shapes(raster_paths):
-    sizes = []
-    for varname, path in raster_paths.items():
-        with rasterio.open(path) as src:
-           
-            width, height = src.width, src.height
-            bounds = src.bounds
-            size = width * height
-            sizes.append(size)
-            print(f"Raster: {varname}")
-            print(f"  - Shape (Width x Height): {width} x {height}")
-            print(f"  - Extent (Bounds): {bounds}\n")
-    
-    print(min(sizes))
 
 
 def subset_normalize_and_align_rasters(raster_paths:dict, output_paths:dict) -> None: 
@@ -203,30 +198,47 @@ def create_prediction_geotiff(model, predictor_paths, output_raster_path, polygo
     print(f"Finished writing the prediction to {output_raster_path}")
 
 
-
-def main(model_folder):
-    model_folder = Path(model_folder)
-
-    module_name = "rural_beauty.config"
-
-    model_basename = os.path.basename(model_folder)
+def parse_folder_name(model_basename):  
     parts = model_basename.split("__")
     country, target_variable, sampling_method, model_class, class_balance, sugar = parts
     number_classes = int(sugar[0])
+    return country, target_variable, sampling_method, model_class, class_balance, sugar, number_classes
 
 
+def print_tif_shapes(raster_paths):
+    sizes = []
+    for varname, path in raster_paths.items():
+        with rasterio.open(path) as src:
+           
+            width, height = src.width, src.height
+            bounds = src.bounds
+            size = width * height
+            sizes.append(size)
+            print(f"Raster: {varname}")
+            print(f"  - Shape (Width x Height): {width} x {height}")
+            print(f"  - Extent (Bounds): {bounds}\n")
+    
+    print(min(sizes))
 
-    print(f"Country: {country}")
-    print(f"Target Variable: {target_variable}")
-    print(f"Sampling Method: {sampling_method}")
-    print(f"Model Class: {model_class}")
-    print(f"Class Balance: {class_balance}")
-    print(f"Number of Classes: {number_classes}")
-    print(f"Sugar: {sugar}")
+def main(model_folder):
+    model_folder = Path(model_folder)
+    model_basename = os.path.basename(model_folder)
+   
+    country, target_variable, sampling_method, model_class, class_balance, sugar, number_classes = parse_folder_name(model_basename)
 
+    # print(f"Country: {country}")
+    # print(f"Target Variable: {target_variable}")
+    # print(f"Sampling Method: {sampling_method}")
+    # print(f"Model Class: {model_class}")
+    # print(f"Class Balance: {class_balance}")
+    # print(f"Number of Classes: {number_classes}")
+    # print(f"Sugar: {sugar}")
+
+    # Check if teh Model folder exists. 
     if not os.path.exists(models_dir / model_basename):
         raise ValueError(f"Invalid argument: The model directory '{models_dir / model_basename}' does not exist. Have you run this exact model?")
     
+    # get the raster data we trained with.
     _, _, coords_path, feature_paths = get_extracted_points_paths(country, target_variable, sampling_method)
 
 
