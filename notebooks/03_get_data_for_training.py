@@ -46,10 +46,6 @@ def main(country: str, target_variable: str, sampling_method: str, overwrite:boo
     # get Boundary Polygon path
     NUTS_path = getattr(config_module, f"NUTS_{country}")
 
-    # load Boundary Polygon
-    NUTS = gpd.read_file(NUTS_path)
-    polygon = NUTS.geometry.iloc[0]
-
     # get feature data paths
     features = get_all_input_layer_paths()
 
@@ -59,25 +55,41 @@ def main(country: str, target_variable: str, sampling_method: str, overwrite:boo
     # check path validity
     check_input_paths(features)
 
+    # load Boundary Polygon
+    NUTS = gpd.read_file(NUTS_path)
+    polygon = NUTS.geometry.iloc[0]
+    # add buffer to better extract coastal areas. 
+    polygon = polygon.buffer(2500)    
+
+
     # extract outcome based on parameters target_variable and country/polygon
     match (country, sampling_method):
         case ('DE', 'all_pixels'):
             extraction_points, outcome_values = extract_all_raster_values_within_polygon(outcome_raster, polygon)
         case ('DE', 'random_pixels'):
-            extraction_points, outcome_values = extract_random_raster_values_within_polygon(raster_path=outcome_raster, num_points= 1000, polygon=polygon)
+            extraction_points, outcome_values = extract_random_raster_values_within_polygon(raster_path=outcome_raster, num_points= 10000, polygon=polygon)
+            
         case ('UK', 'pooled_pixels_all_points'):
+            # in the case of UK we don't extract a full raster, but only the points that have at least one image. 
+            # those points are found in UK_scenic_points. 
             from rural_beauty.config import UK_scenic_points
             coords_gdf = gpd.read_file(UK_scenic_points)
             extraction_points = np.array([Point(x, y) for x, y in zip(coords_gdf.geometry.x, coords_gdf.geometry.y)])
-
-            print(f"DEBUG:{type(extraction_points)}")
 
             outcome_values = extract_raster_values_from_points(outcome_raster, extraction_points)
         case ("DEUK", _):
             raise ValueError('DEUK extraction is not yet implemented')
         case _:
             raise ValueError('unavailable options of country + sampling_method. Default is DE all_pixels or UK pooled_pixels_all_points' )
-    
+
+    # print(f"{type(extraction_points)}; length: {len(extraction_points)}")
+    # format output objects:
+    # we make sure we come out of the swich case with the data we need. 
+    if 'extraction_points' in locals():
+        coords_df = create_coords_df_from_extraction_points(extraction_points)
+    else:
+        raise ValueError(f"no extraction points object in locals for {country} {sampling_method}. This indicates a bug in the code!")
+        
     
     # extract features for the same locations. 
     predictors_dict = {}
@@ -87,18 +99,10 @@ def main(country: str, target_variable: str, sampling_method: str, overwrite:boo
     # Ensure the directory exists
     os.makedirs(os.path.dirname(predictors_path), exist_ok=True)
 
-
-    # format output objects:
-    if extraction_points:
-        coords_df = create_coords_df_from_extraction_points(extraction_points)
-    else:
-        raise ValueError(f"no extraction points object in locals for {country} {sampling_method}. This indicates a bug in the code!")
-    
     
     # outcome_values is a list, to ensure it is aligned with the predictors, which have headers, We add a generic header. 
     outcome_df = pd.DataFrame({'value': outcome_values})
     predictors_df = pd.DataFrame(predictors_dict)
-
     features_out = {k: str(v) for k, v in features.items()}
 
 
