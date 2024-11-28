@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import os
+from typing import Tuple
 
 package_dir = Path(os.path.dirname(os.path.dirname(__file__)))
 data_dir = package_dir.parent / 'data'
@@ -25,12 +26,25 @@ bild_raster_dir = data_dir / 'cleaned' / 'landschaftsbild'
 beauty_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'schoenheit_DE.tif'
 unique_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'eigenart_DE.tif'
 diverse_raster = data_dir / 'cleaned' / 'landschaftsbild' / 'vielfalt_DE.tif'
-
+DE_outcome_raster_paths = {'unique': unique_raster, 
+                           'diverse': diverse_raster, 
+                           'beauty': beauty_raster}
 
 ## UK data
 UK_scenic_raw    = data_dir / "raw"       / "scenicornot" / "votes.tsv"
 UK_scenic_points = data_dir / "processed" / "scenicornot" / "scenic.geojson"
 UK_scenic_raster = data_dir / "processed"   / "scenicornot" / "scenic.tif"
+
+def get_target_variable_raster_path(country, target_variable = None) -> Path:
+    
+    if country == 'DE':
+      if target_variable in DE_outcome_raster_paths:        
+         return DE_outcome_raster_paths[target_variable]
+      else:
+         raise ValueError('The target variable {target_variable} is not valid for DE')
+    if country == 'UK':
+       return UK_scenic_raster
+        
 
 
 ## Corine Land Cover
@@ -101,16 +115,46 @@ NUTS_UK = data_dir / 'cleaned' / 'NUTS' / 'UK_without_NI.geojson'
 
 # here we will save random points, model pkl mean and sd of how we scaled the input data, so we can replicate it for predictions
 models_dir  = data_dir / 'models'
+extracted_points_dir = models_dir / '__extracted_points'
 
-predictors_DE    = models_dir / '_rnd_points' / 'DE' / 'predictors.csv'
-outcome_DE       = models_dir / '_rnd_points' / 'DE' / 'outcome.csv'
-coords_DE        = models_dir / '_rnd_points' / 'DE' / 'coords.csv'
-feature_paths_DE = models_dir / '_rnd_points' / 'DE' / 'feature_paths.json'
+def get_extracted_points_paths(country, target_variable, sampling_method) -> Tuple[Path, Path, Path, Path]:
+    """
+    Constructs and returns the paths for predictors, outcome, coordinates, and feature paths 
+    for a given country and sampling method.
 
-predictors_UK = models_dir / '_rnd_points' / 'UK' / 'predictors.csv'
-outcome_UK    = models_dir / '_rnd_points' / 'UK' / 'outcome.csv'
-coords_UK     = models_dir / '_rnd_points' / 'UK' / 'coords.csv'
-feature_paths_UK = models_dir / '_rnd_points' / 'UK' / 'feature_paths.json'
+    Parameters:
+    ----------
+    country : str
+        The country code (e.g., 'DE', 'UK', 'DEUK').
+    sampling_method : str
+        The sampling method used (e.g., 'random_pixels', 'all_pixels', 'pooled_pixels_random_sample', pooled_pixels_all_points, pooled_pixels_all_pixels,  'individual_images_full_sample').
+        Not every sampling method is available for every country
+
+    Returns:
+    -------
+    Tuple[Path, Path, Path, Path]
+        A tuple containing the following paths:
+        - predictors_path: Path to the predictors file.
+        - outcome_path: Path to the outcome file.
+        - coords_path: Path to the coordinates file.
+        - feature_paths_path: Path to the feature paths JSON file.
+    """
+    base_path = extracted_points_dir / country / target_variable / sampling_method
+    return (base_path / 'predictors.csv', 
+            base_path / 'outcome.csv',
+            base_path / 'coords.csv',
+            base_path / 'feature_paths.json')
+
+
+# predictors_DE    = extracted_points_dir / 'DE' / 'predictors.csv'
+# outcome_DE       = extracted_points_dir / 'DE' / 'outcome.csv'
+# coords_DE        = extracted_points_dir / 'DE' / 'coords.csv'
+# feature_paths_DE = extracted_points_dir / 'DE' / 'feature_paths.json'
+
+# predictors_UK    = extracted_points_dir / 'UK' / 'predictors.csv'
+# outcome_UK       = extracted_points_dir / 'UK' / 'outcome.csv'
+# coords_UK        = extracted_points_dir / 'UK' / 'coords.csv'
+# feature_paths_UK = extracted_points_dir / 'UK' / 'feature_paths.json'
 
 
 
