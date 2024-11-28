@@ -1,45 +1,60 @@
 import pandas as pd
 import numpy as np
-import joblib
 import os
 import json
+
+# various ML models. 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from xgboost import XGBClassifier
 from sklearn import svm
 
+# in and export ML models to disc. 
+import joblib
 
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, f1_score
+# ML utilities
 from sklearn.model_selection import train_test_split
-
-
-
-from scipy.stats import kendalltau
 import matplotlib.pyplot as plt
 
-import argparse    # to make the script accept arguments. 
+# selection criteria
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, f1_score
+from scipy.stats import kendalltau
+
+# to make the script accept arguments. 
+import argparse    
 
 
-# Configuration variables
+# dynamic filepaths
 from rural_beauty.config import models_dir
 from rural_beauty.config import get_extracted_points_paths
 
+# Handles oversampling in case of unbalances classes. Which all our Ys are. 
 from imblearn.over_sampling import RandomOverSampler
 
 
 
 # todo make default values for model_class, number_classes, sampling_method
-def main(country, target_variable, model_class, sampling_method, class_balance, number_classes, sugar):
+def main(country, target_variable, model_class, sampling_method, class_balance, number_classes, sugar) -> None:
+    """
+    Main function for training and evaluating a machine learning model based on input parameters.
 
-    if country not in ['DE', 'UK']:
-        raise ValueError("country needs to be UK or DE")
-    
+    Args:
+        country (str): Country code ('DE' or 'UK').
+        target_variable (str): Target variable to predict (e.g., 'scenic', 'beauty').
+        model_class (str): Type of ML model to use ('XGB', 'RandomForestClassifier', 'DecisionTreeClassifier').
+        sampling_method (str): Data sampling method ('all_pixels', 'random_pixels', etc.).
+        class_balance (str): Class balancing method ('oversampling', 'asis').
+        number_classes (int): Number of classes to classify the target variable.
+        sugar (str): Unique string for differentiating between models.
 
+    Returns:
+        None
+    """
+  
     # define parameters
-    para_outcome  = target_variable
-    model_basename = f"{country}__{para_outcome}__{sampling_method}__{model_class}__{class_balance}__{sugar}"
-    model_folder = models_dir / model_basename
-    os.makedirs(model_folder, exist_ok=True)
+    para_outcome   = target_variable
+    model_basename = f"{country}__{para_outcome}__{sampling_method}__{model_class}__{class_balance}__{sugar}" # instead use something like "__".join(**kargs)
+    model_folder   = models_dir / model_basename
 
     # define output paths
     model_path               = model_folder / 'model.pkl'
@@ -47,12 +62,14 @@ def main(country, target_variable, model_class, sampling_method, class_balance, 
     img_confusion_path       = model_folder / "confusion_matrix.png"
     significant_coefs_path   = model_folder / "significant_coefs.csv"
     logfile_path             = models_dir / "logfile.txt"
+
     # get input paths
     predictors_path, outcome_path, _, _ = get_extracted_points_paths(country, target_variable, sampling_method)
 
     # load data
     predictors_all = pd.read_csv(predictors_path, sep=",", index_col=False, na_values=-99)
     outcome = pd.read_csv(outcome_path, sep=",", index_col=False, na_values=-99)
+
     ## hemerobie is not avaiable on EU level, so we cannot use it for predictions, so we drop them from training. 
     predictors = predictors_all.drop(columns=['hemero_1'], errors='ignore')
 
@@ -62,11 +79,10 @@ def main(country, target_variable, model_class, sampling_method, class_balance, 
     ## Squeeze the outcome classes down to the specified level of class_balancing. Some of our classes are almost empty, this helps that. 
     Y = sqeeze_Y_classes(Y)
 
-
     # test/train split
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y['value'], test_size=0.5, random_state=2024, stratify=Y)
 
-    # over/under sampling
+    # over/under sampling or keep it as is. 
     X_train_balanced, Y_train_balanced = cases_resample_data(X_train, Y_train, class_balance)
 
     # select model
@@ -79,17 +95,20 @@ def main(country, target_variable, model_class, sampling_method, class_balance, 
     ## predictions for test metrics 
     Y_pred_test = model.predict(X_test)
     ## calculate test metrics
-    accuracy = accuracy_score(Y_test, Y_pred_test)
-    f1 = f1_score(Y_test, Y_pred_test, average="weighted")
-    kendall_tau, _ = kendalltau(Y_test, Y_pred_test)
+    accuracy       = accuracy_score(Y_test, Y_pred_test)
+    f1             = f1_score      (Y_test, Y_pred_test, average="weighted")
+    kendall_tau, _ = kendalltau    (Y_test, Y_pred_test)
 
-    # This string gets written to a logfile. 
+    # This string gets written to a logfile later. 
     model_info = f"Model: {model_basename}, Accuracy: {accuracy:.2f}, F1: {f1:.2f}, Kendalls Tau: {kendall_tau:.2f}"
-    print(f"Model Accuracy: {accuracy:.2f}")
-    print(f"Model F1: {f1:.2f}")
+    # This one to the console.
+    print(f"Model Accuracy:      {accuracy:.2f}")
+    print(f"Model F1:            {f1:.2f}")
     print(f"Model Kendall's Tau: {kendall_tau:.2f}")
 
     # save outputs
+    os.makedirs(model_folder, exist_ok=True)
+
     ## save model for predictions later (scripts 05_...)
     joblib.dump(model, model_path)
     ## save csv with sigificant features and their coeficients (if applicable; if not all are saved instead)
@@ -194,7 +213,16 @@ def tree_structure_RF_best_accuracy_tree(output_path, X_train, Y_train, model, m
 
 
 def handle_na(X, Y):
-    
+    """
+    Handles missing values and invalid entries in the predictors and outcome datasets.
+
+    Args:
+        X (pd.DataFrame): Predictor variables.
+        Y (pd.DataFrame): Outcome variable.
+
+    Returns:
+        tuple: Cleaned predictors (X) and outcome (Y) with matching indices.
+    """
     ## Ensure X and Y have aligned indices
     X, Y = X.align(Y, axis=0)
 
@@ -209,6 +237,7 @@ def handle_na(X, Y):
     X = X[~to_drop]
     Y = Y[~to_drop]
     return X,Y
+
 
 def sqeeze_Y_classes (Y):
     Y['value'] = Y['value'] - Y['value'].min()
@@ -226,6 +255,17 @@ def sqeeze_Y_classes (Y):
 
 
 def cases_resample_data(X_train, Y_train, class_balance):
+    """
+    Resamples training data based on the specified class balancing method.
+
+    Args:
+        X_train (pd.DataFrame): Training predictors.
+        Y_train (pd.Series): Training labels.
+        class_balance (str): Class balancing method ('oversampling', 'asis').
+
+    Returns:
+        tuple: Resampled predictors (X_train_balanced) and labels (Y_train_balanced).
+    """
     match (class_balance):
         case ("oversampling"):
             oversampler = RandomOverSampler(random_state=2024)
@@ -238,7 +278,20 @@ def cases_resample_data(X_train, Y_train, class_balance):
         
     return X_train_balanced, Y_train_balanced
 
+
 def cases_assign_model_class(model_class):
+    """
+    Assigns and initializes a machine learning model class based on the input string.
+
+    Args:
+        model_class (str): Type of ML model to initialize ('RandomForestClassifier', 'XGB', etc.).
+
+    Returns:
+        object: Initialized ML model.
+
+    Raises:
+        ValueError: If an unsupported model class is provided.
+    """
     match (model_class):
         case ("RandomForestClassifier"):
             model = RandomForestClassifier(max_depth=3, random_state=2024)
@@ -259,24 +312,25 @@ def append_model_info_to_file(file_path, model_info):
 
 if __name__ == "__main__":
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Model the target variable using Random Forest. ")
-    parser.add_argument("country", type=str, choices= ['DE', 'UK'], help="Country code ('DE', 'UK', or 'DEUK').")
-    parser.add_argument("target_variable", choices= ['scenic', 'beauty', 'unique', 'diverse'], type=str, help="Target variable (e.g., 'beauty', 'scenic').")
-    parser.add_argument("model_class",  choices= ['XGB', 'RandomForestClassifier', 'DecisionTreeClassifier'], type=str, help="Model class: RandomForestClassifier, TreeClassifier, XGB...")
-    parser.add_argument("sampling_method",  choices= ['all_pixels', 'random_pixels', 'pooled_pixels_all_points', 'pooled_pixels_random_points'], type=str, help="Sampling method for data extraction used (e.g., 'all_pixels', 'random_pixels').")
-    parser.add_argument("class_balance",  choices= ['oversamping', 'asis'], type=str, default=True, help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
-    parser.add_argument("number_classes", type=int,  help="This sets the number of classes in the model. Fewer classes can be easier to predict")   
-    parser.add_argument("sugar"         , type=str, help = "Any unique string to differentieate between models. This will be added to the output model folder name")
+    parser = argparse.ArgumentParser(description="Train one of various ML models on preselected data for Germany or the UK")
+
+    parser.add_argument("country"         , type=str, choices=['DE', 'UK'], help="Country code ('DE', 'UK', or 'DEUK').")
+    parser.add_argument("target_variable" , type=str, choices=['scenic', 'beauty', 'unique', 'diverse'], help="Target variable (e.g., 'beauty', 'scenic').")
+    parser.add_argument("model_class"     , type=str, choices=['XGB', 'RandomForestClassifier', 'DecisionTreeClassifier'], help="Model class: RandomForestClassifier, TreeClassifier, XGB...")
+    parser.add_argument("sampling_method" , type=str, choices=['all_pixels', 'random_pixels', 'pooled_pixels_all_points', 'pooled_pixels_random_points'], help="Sampling method for data extraction used (e.g., 'all_pixels', 'random_pixels').")
+    parser.add_argument("class_balance"   , type=str, choices=['oversamping', 'asis'], default=True, help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
+    parser.add_argument("number_classes"  , type=int, help="This sets the number of classes in the model. Fewer classes can be easier to predict")   
+    parser.add_argument("sugar"           , type=str, help="Any unique string to differentieate between models. This will be added to the output model folder name")
     # Get arguments from command line
     args = parser.parse_args()
 
     # Run the main function with parsed arguments
     main(
-        country=args.country,
-        target_variable=args.target_variable,
-	    model_class=args.model_class,
-        sampling_method=args.sampling_method,
-        class_balance=args.class_balance,
-        number_classes = args.number_classes,
-        sugar          = args.sugar
+        country          = args.country,
+        target_variable  = args.target_variable,
+	    model_class      = args.model_class,
+        sampling_method  = args.sampling_method,
+        class_balance    = args.class_balance,
+        number_classes   = args.number_classes,
+        sugar            = args.sugar
     )
