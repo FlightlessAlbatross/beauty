@@ -77,7 +77,7 @@ def main(country, target_variable, model_class, sampling_method, class_balance, 
     X, Y = handle_na(predictors, outcome)
 
     ## Squeeze the outcome classes down to the specified level of class_balancing. Some of our classes are almost empty, this helps that. 
-    Y = sqeeze_Y_classes(Y)
+    Y = sqeeze_Y_classes(Y, number_classes)
 
     # test/train split
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y['value'], test_size=0.5, random_state=2024, stratify=Y)
@@ -239,7 +239,7 @@ def handle_na(X, Y):
     return X,Y
 
 
-def sqeeze_Y_classes (Y):
+def sqeeze_Y_classes (Y, number_classes):
     Y['value'] = Y['value'] - Y['value'].min()
     # print('Y - ymin:')
     # print(Y['value'].unique().sort())
@@ -247,12 +247,10 @@ def sqeeze_Y_classes (Y):
 
     squeeze_factor = number_classes / Y['value'].max()
     Y['value'] = Y['value']*squeeze_factor
-    return Y
-
-
+    
     # print(f"DEBUG: miny {Y.min()}, maxy {Y.max()}")
     Y = Y.round(0).clip(lower=0, upper=number_classes-1).astype(int)
-
+    return Y
 
 def cases_resample_data(X_train, Y_train, class_balance):
     """
