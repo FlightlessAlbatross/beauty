@@ -1,5 +1,3 @@
-
-
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -72,10 +70,13 @@ def subset_normalize_and_align_rasters(raster_paths:dict, output_paths:dict) -> 
     width = int((intersection_bounds[2] - intersection_bounds[0]) / pixel_width)
     height = int((intersection_bounds[3] - intersection_bounds[1]) / pixel_height)
 
+
     # Align rasters to this common extent
     for (varname, raster_path), output_path in zip(raster_paths.items(), output_paths.values()):
         if os.path.exists(output_path):
-            print(f"Skipping {output_path}, file already exists.")
+            # print(f"Skipping {output_path}, file already exists.") # this can be a DEBUG message from the logging library TODO
+            if not (skip_existing_flag := True): # TODO actually check if the existing files are the boundary we expect.
+                print(f"Skipping {output_path}, file exists. The other features probably exist as well. Supressing this message for the other files during this loop.")
             continue
 
         # make output dir if it doesn't exist already. 
@@ -95,7 +96,7 @@ def subset_normalize_and_align_rasters(raster_paths:dict, output_paths:dict) -> 
                 'width': width,
                 'transform': transform
             })
-            print(f"Aligning and normalizing {raster_path}. Dimensions: {width}, {height}")
+            # print(f"Aligning and normalizing {raster_path}. Dimensions: {width}, {height}") # this can be a DEBUG message from the logging module
 
             # Read, reproject, and normalize the data, then save
             with rasterio.open(output_path, 'w', **kwargs) as dst:
@@ -234,7 +235,7 @@ def main(model_folder):
     # print(f"Number of Classes: {number_classes}")
     # print(f"Sugar: {sugar}")
 
-    # Check if teh Model folder exists. 
+    # Check if the Model folder exists. 
     if not os.path.exists(models_dir / model_basename):
         raise ValueError(f"Invalid argument: The model directory '{models_dir / model_basename}' does not exist. Have you run this exact model?")
     
@@ -250,7 +251,9 @@ def main(model_folder):
     boundary_gpd_path = data_dir / 'cleaned' / 'NUTS' / 'EU_main.geojson'
     # load boundary polygon
     boundary_gpd  = gpd.read_file(boundary_gpd_path)
-
+    # We add a buffer to ensure prediction of coastal areas. 
+    # optional TODO add check that CRS is in meters
+    boundary_gpd.geometry  = boundary_gpd.geometry.buffer(5000)
 
     # load the model, the scaling and the significant coefficients. 
     try:
