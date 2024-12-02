@@ -24,6 +24,7 @@ PREDICTOR=2
 TILED="YES"
 NODATA_VALUE=-99
 
+
 # Directory for intermediary files
 INTERMEDIARY_DIR=$(dirname "$INTERMEDIARY")
 mkdir -p $INTERMEDIARY_DIR
@@ -35,8 +36,8 @@ MIN_OUTFILE="$INTERMEDIARY_DIR/EU_DEM_EU_min.tif"
 # Step 1: Generate Maximum Values Raster
 if [ ! -f "$MAX_OUTFILE" ]; then
     echo "Generating maximum values raster..."
+    
     gdalwarp -te $WEST $SOUTH $EAST $NORTH -te_srs $EPSG_CODE -tap -tr $PIXEL_SIZE $PIXEL_SIZE -t_srs $EPSG_CODE -ot $OUTPUT_TYPE -r max -co "TILED=$TILED" $INFILE $MAX_OUTFILE
-
 else
     echo "$MAX_OUTFILE already exists. Skipping generation."
 fi
@@ -51,10 +52,19 @@ else
 fi
 
 
+
 # Step 3: Calculate the Range
+## get the nodata value used by the intermediaries. 
+NODATA_VALUE_SRC=$(gdalinfo $MAX_OUTFILE | grep "NoData Value=" | sed 's/NoData Value=//')
+
+# Calculate the difference between max and min values, treating NoData values as 0
+# hideNoData is cucial, otherwise gdalcalc.py just skips NAs, but we want them 0. 
 if [ ! -f "$INTERMEDIARY" ]; then
     echo "Generating difference between min and max values raster..."
-    gdal_calc.py -A $MAX_OUTFILE -B $MIN_OUTFILE --outfile=$INTERMEDIARY --calc="A-B" --type=$OUTPUT_TYPE --NoDataValue=$NODATA_VALUE
+    gdal_calc.py -A $MAX_OUTFILE -B $MIN_OUTFILE --outfile=$INTERMEDIARY \
+                 --calc="((A != $NODATA_VALUE_SRC) & (B != $NODATA_VALUE_SRC))*(A-B)" \
+                 --type=$OUTPUT_TYPE --NoDataValue=$NODATA_VALUE \
+                 --hideNoData
 else
     echo "$INTERMEDIARY already exists. Skipping generation."
 fi
