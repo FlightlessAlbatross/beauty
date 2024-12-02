@@ -253,7 +253,7 @@ def main(model_folder):
     boundary_gpd  = gpd.read_file(boundary_gpd_path)
     # We add a buffer to ensure prediction of coastal areas. 
     # optional TODO add check that CRS is in meters
-    boundary_gpd.geometry  = boundary_gpd.geometry.buffer(5000)
+    boundary_gpd.geometry  = boundary_gpd.geometry.buffer(10000)
 
     # load the model, the scaling and the significant coefficients. 
     try:

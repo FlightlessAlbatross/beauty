@@ -8,6 +8,7 @@ import json
 import rasterio
 from rasterio.mask import mask
 import random
+from tqdm import tqdm
 
 import argparse    # to make the script accept arguments. 
 import importlib   # to dynamically import from the config file
@@ -59,15 +60,16 @@ def main(country: str, target_variable: str, sampling_method: str, overwrite:boo
     NUTS = gpd.read_file(NUTS_path)
     polygon = NUTS.geometry.iloc[0]
     # add buffer to better extract coastal areas. 
-    polygon = polygon.buffer(2500)    
+    polygon = polygon.buffer(5000)    
 
 
     # extract outcome based on parameters target_variable and country/polygon
+    print(f"Extracting {target_variable}'s raster values")
     match (country, sampling_method):
         case ('DE', 'all_pixels'):
             extraction_points, outcome_values = extract_all_raster_values_within_polygon(outcome_raster, polygon)
         case ('DE', 'random_pixels'):
-            extraction_points, outcome_values = extract_random_raster_values_within_polygon(raster_path=outcome_raster, num_points= 10000, polygon=polygon)
+            extraction_points, outcome_values = extract_random_raster_values_within_polygon(raster_path=outcome_raster, num_points= 5000, polygon=polygon)
             
         case ('UK', 'pooled_pixels_all_points'):
             # in the case of UK we don't extract a full raster, but only the points that have at least one image. 
@@ -79,6 +81,10 @@ def main(country: str, target_variable: str, sampling_method: str, overwrite:boo
             outcome_values = extract_raster_values_from_points(outcome_raster, extraction_points)
         case ("DEUK", _):
             raise ValueError('DEUK extraction is not yet implemented')
+        case ("UK", _):
+            raise ValueError('no extraction method for country: UK + sampling method: {sampling_method}. Try >pooled_pixels_all_points<')
+        case ("DE", _):
+            raise ValueError('no extraction method for country: DE + sampling method: {sampling_method}. Try >all_pixels< or >random_pixels<')
         case _:
             raise ValueError('unavailable options of country + sampling_method. Default is DE all_pixels or UK pooled_pixels_all_points' )
 
@@ -93,7 +99,7 @@ def main(country: str, target_variable: str, sampling_method: str, overwrite:boo
     
     # extract features for the same locations. 
     predictors_dict = {}
-    for label, path in features.items():
+    for label, path in tqdm(features.items(), desc="Extracting explanatory raster values"):
         predictors_dict[label] = extract_raster_values_from_points(path, extraction_points)
 
     # Ensure the directory exists
@@ -222,10 +228,10 @@ def return_NoDatavalue(raster_path):
 if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Extract data from raster files for specific countries and sampling methods.")
-    parser.add_argument("country", type=str, help="Country code ('DE', 'UK', or 'DEUK').")
-    parser.add_argument("target_variable", type=str, help="Target variable to extract (e.g., 'beauty', 'scenic').")
-    parser.add_argument("sampling_method", type=str, help="Sampling method (e.g., 'all_pixels', 'random_pixels').")
-    parser.add_argument("--overwrite", type=bool, default=True, help="Whether to overwrite existing data (default: True).")
+    parser.add_argument("country"        , type=str               , help="Country code ('DE', 'UK', or 'DEUK').")
+    parser.add_argument("target_variable", type=str               , help="Target variable to extract (e.g., 'beauty', 'scenic').")
+    parser.add_argument("sampling_method", type=str               , help="Sampling method (e.g., 'all_pixels', 'random_pixels').")
+    parser.add_argument("--overwrite"    , type=bool, default=True, help="Whether to overwrite existing data (default: True).")
 
     # Get arguments from command line
     args = parser.parse_args()
