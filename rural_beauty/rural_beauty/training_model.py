@@ -316,7 +316,7 @@ if __name__ == "__main__":
     parser.add_argument("sampling_method" , type=str, choices=['all_pixels', 'random_pixels', 'pooled_pixels_all_points', 'pooled_pixels_random_points'], help="Sampling method for data extraction used (e.g., 'all_pixels', 'random_pixels').")
     parser.add_argument("number_classes"  , type=int, help="This sets the number of classes in the model. Fewer classes can be easier to predict")   
     parser.add_argument("sugar"           , type=str, help="Any unique string to differentieate between models. This will be added to the output model folder name")
-    parser.add_argument("--class_balance" , type=str, default='asis', choices=['oversamping', 'asis'], default=True, help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
+    parser.add_argument("--class_balance" , type=str, default='asis', choices=['oversamping', 'asis'], help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
     # Get arguments from command line
     args = parser.parse_args()
 
