@@ -20,6 +20,9 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, f1_score
 from scipy.stats import kendalltau
 
+# hyperparamter tuning
+from sklearn.model_selection import GridSearchCV
+
 # to make the script accept arguments. 
 import argparse    
 
@@ -80,7 +83,8 @@ def main(country, target_variable, model_class, sampling_method, number_classes,
     Y = sqeeze_Y_classes(Y, number_classes)
 
     # test/train split
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y['value'], test_size=0.5, random_state=2024, stratify=Y)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y['value'], test_size=0.8, random_state=2024, stratify=Y)
+
 
     # over/under sampling or keep it as is. 
     X_train_balanced, Y_train_balanced = cases_resample_data(X_train, Y_train, class_balance)
@@ -88,7 +92,13 @@ def main(country, target_variable, model_class, sampling_method, number_classes,
     # select model
     model = cases_assign_model_class(model_class)
 
-    # train model  
+    hyperparameter_training = True
+    if hyperparameter_training:
+        results = hyperparameter_tuning(model_class, X_train, Y_train)
+        return results
+    
+
+    # train model
     model.fit(X_train_balanced, Y_train_balanced)
 
     # test metrics 
@@ -133,6 +143,64 @@ def main(country, target_variable, model_class, sampling_method, number_classes,
     #                                      model = model,
     #                                      model_basename = model_basename)
 
+
+
+def hyperparameter_tuning(model_class, X, y, cv=5):
+    """
+    Perform hyperparameter cross-validation tuning for XGBoost, RandomForest, or DecisionTree.
+
+    Args:
+        model_class (str): Model type ('XGB', 'RF', or 'Tree').
+        X (pd.DataFrame or np.array): Feature matrix.
+        y (pd.Series or np.array): Target vector.
+        cv (int): Number of cross-validation folds. Defaults to 5.
+
+    Returns:
+        dict: Best hyperparameters and their corresponding model.
+    """
+    # Define model and hyperparameter grid based on model class
+    if model_class == "XGB":
+        model = XGBClassifier(use_label_encoder=False, eval_metric="logloss")
+        param_grid = {
+            "max_depth": [3, 5, 7],
+            "learning_rate": [0.01, 0.1, 0.2],
+            "n_estimators": [50, 100, 200],
+            "subsample": [0.8, 1.0],
+        }
+    elif model_class == "RF":
+        model = RandomForestClassifier(random_state=42)
+        param_grid = {
+            "n_estimators": [50, 100, 200],
+            "max_depth": [None, 10, 20],
+            "min_samples_split": [2, 5, 10],
+        }
+    elif model_class == "Tree":
+        model = DecisionTreeClassifier(random_state=42)
+        param_grid = {
+            "max_depth": [None, 10, 20],
+            "min_samples_split": [2, 5, 10],
+            "min_samples_leaf": [1, 2, 4],
+        }
+    else:
+        raise ValueError("Invalid model_class. Choose from 'XGB', 'RF', or 'Tree'.")
+
+    # Perform grid search cross-validation
+    grid_search = GridSearchCV(
+        estimator=model,
+        param_grid=param_grid,
+        scoring="accuracy",
+        cv=cv,
+        verbose=2,
+        n_jobs=-1,  # Use all available cores
+    )
+    grid_search.fit(X, y)
+
+    # Return the best parameters and best model
+    return {
+        "best_params": grid_search.best_params_,
+        "best_model": grid_search.best_estimator_,
+        "best_score": grid_search.best_score_,
+    }
 
 
 
@@ -274,7 +342,6 @@ def cases_resample_data(X_train, Y_train, class_balance):
         
     return X_train_balanced, Y_train_balanced
 
-
 def cases_assign_model_class(model_class):
     """
     Assigns and initializes a machine learning model class based on the input string.
@@ -316,7 +383,7 @@ if __name__ == "__main__":
     parser.add_argument("sampling_method" , type=str, choices=['all_pixels', 'random_pixels', 'pooled_pixels_all_points', 'pooled_pixels_random_points'], help="Sampling method for data extraction used (e.g., 'all_pixels', 'random_pixels').")
     parser.add_argument("number_classes"  , type=int, help="This sets the number of classes in the model. Fewer classes can be easier to predict")   
     parser.add_argument("sugar"           , type=str, help="Any unique string to differentieate between models. This will be added to the output model folder name")
-    parser.add_argument("--class_balance" , type=str, default='asis', choices=['oversamping', 'asis'], default=True, help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
+    parser.add_argument("--class_balance" , type=str, default='asis', choices=['oversamping', 'asis'], help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
     # Get arguments from command line
     args = parser.parse_args()
 
