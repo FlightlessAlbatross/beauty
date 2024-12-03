@@ -34,7 +34,7 @@ from imblearn.over_sampling import RandomOverSampler
 
 
 # todo make default values for model_class, number_classes, sampling_method
-def main(country, target_variable, model_class, sampling_method, class_balance, number_classes, sugar) -> None:
+def main(country, target_variable, model_class, sampling_method, number_classes, sugar, class_balance = 'asis') -> None:
     """
     Main function for training and evaluating a machine learning model based on input parameters.
 
@@ -43,9 +43,9 @@ def main(country, target_variable, model_class, sampling_method, class_balance, 
         target_variable (str): Target variable to predict (e.g., 'scenic', 'beauty').
         model_class (str): Type of ML model to use ('XGB', 'RandomForestClassifier', 'DecisionTreeClassifier').
         sampling_method (str): Data sampling method ('all_pixels', 'random_pixels', etc.).
-        class_balance (str): Class balancing method ('oversampling', 'asis').
         number_classes (int): Number of classes to classify the target variable.
         sugar (str): Unique string for differentiating between models.
+        class_balance (str): Class balancing method ('oversampling', 'asis').
 
     Returns:
         None
@@ -240,10 +240,8 @@ def handle_na(X, Y):
 
 
 def sqeeze_Y_classes (Y, number_classes):
+    # XGB needs the lowest class to be 0
     Y['value'] = Y['value'] - Y['value'].min()
-    # print('Y - ymin:')
-    # print(Y['value'].unique().sort())
-    # print(Y.head())
 
     squeeze_factor = number_classes / Y['value'].max()
     Y['value'] = Y['value']*squeeze_factor
@@ -298,7 +296,7 @@ def cases_assign_model_class(model_class):
         case ("DecisionTreeClassifier"):
             model = DecisionTreeClassifier(max_depth=3, random_state=2024)
         case ("LinearRegression"):
-            raise ValueError ("LinearRegression is not yet implemented")
+            LinearRegression()
         case _:
             raise ValueError ("NO valid model_class has been selected. Try RandomForestClassifier or XGB or SVC or DescisionTreeClassifier")
     return model
@@ -316,9 +314,9 @@ if __name__ == "__main__":
     parser.add_argument("target_variable" , type=str, choices=['scenic', 'beauty', 'unique', 'diverse'], help="Target variable (e.g., 'beauty', 'scenic').")
     parser.add_argument("model_class"     , type=str, choices=['XGB', 'RandomForestClassifier', 'DecisionTreeClassifier'], help="Model class: RandomForestClassifier, TreeClassifier, XGB...")
     parser.add_argument("sampling_method" , type=str, choices=['all_pixels', 'random_pixels', 'pooled_pixels_all_points', 'pooled_pixels_random_points'], help="Sampling method for data extraction used (e.g., 'all_pixels', 'random_pixels').")
-    parser.add_argument("class_balance"   , type=str, choices=['oversamping', 'asis'], default=True, help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
     parser.add_argument("number_classes"  , type=int, help="This sets the number of classes in the model. Fewer classes can be easier to predict")   
     parser.add_argument("sugar"           , type=str, help="Any unique string to differentieate between models. This will be added to the output model folder name")
+    parser.add_argument("--class_balance" , type=str, default='asis', choices=['oversamping', 'asis'], default=True, help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
     # Get arguments from command line
     args = parser.parse_args()
 
@@ -327,8 +325,8 @@ if __name__ == "__main__":
         country          = args.country,
         target_variable  = args.target_variable,
 	    model_class      = args.model_class,
-        sampling_method  = args.sampling_method,
         class_balance    = args.class_balance,
         number_classes   = args.number_classes,
-        sugar            = args.sugar
+        sugar            = args.sugar,
+        sampling_method  = args.sampling_method
     )
