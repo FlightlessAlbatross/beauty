@@ -53,7 +53,6 @@ def main():
     from rural_beauty.config import CLC_EU, CLC_boolean_layers_dir, CLC_coverage_EU_dir
     from rural_beauty import split_CLC_layers
 
-
     # split landcover data into separate tifs of "share of Landcover Class X per pixel"
     split_CLC_layers.main(CLC_EU, CLC_boolean_layers_dir)
 
@@ -71,12 +70,16 @@ def main():
 
     # Protected Areas
     from rural_beauty.config import protected0, protected1, protected2, protected_EU, protected_raster, protected_raster_scaled
-    print (protected0)
 
     subprocess.run(["bash", "scripts/WDPA_subset_reproject.sh", 
                 protected0, protected1, protected2, protected_EU])
     subprocess.run(["Rscript", "scripts/rasterize_protected_poly_geom_EU.R", 
                 protected_EU, protected_raster, protected_raster_scaled])
+    
+
+    # Neighborhood Values
+    from rural_beauty import neighborhood_values
+    neighborhood_values.main()
 
 
 
