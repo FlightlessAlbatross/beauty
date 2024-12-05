@@ -70,6 +70,14 @@ def main(country: str, target_variable: str, sampling_method: str, overwrite:boo
             extraction_points, outcome_values = extract_all_raster_values_within_polygon(outcome_raster, polygon)
         case ('DE', 'random_pixels'):
             extraction_points, outcome_values = extract_random_raster_values_within_polygon(raster_path=outcome_raster, num_points= 5000, polygon=polygon)
+
+        case ('UK', 'pooled_pixels_random_points'):
+            from rural_beauty.config import UK_scenic_points
+            coords_gdf = gpd.read_file(UK_scenic_points)
+            random_selection = coords_gdf.sample(n=5000, random_state=42) 
+            extraction_points = np.array([Point(x, y) for x, y in zip(random_selection.geometry.x, random_selection.geometry.y)])
+            outcome_values = extract_raster_values_from_points(outcome_raster, extraction_points)
+
             
         case ('UK', 'pooled_pixels_all_points'):
             # in the case of UK we don't extract a full raster, but only the points that have at least one image. 
