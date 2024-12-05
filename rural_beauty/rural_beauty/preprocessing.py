@@ -5,7 +5,6 @@ import subprocess
 
 import argparse
 
-
 import json
 import rasterio
 import pandas as pd
@@ -19,67 +18,98 @@ from rasterio.features import geometry_mask
 
 # Beauty/Uniqueness/Diversity
 
-def main():
-    # import paths to the German Beauty dataset and the output for the rasterization
-    from rural_beauty.config import bild_vector_dir, bild_raster_dir # load absolute paths as defined in config.py
-    rasterize_DE_outcome(bild_vector_dir, bild_raster_dir)
-
-
-    # UK Scenic data
-    from rural_beauty.config import UK_scenic_raw, UK_scenic_points, UK_scenic_raster, NUTS_UK
-    UK_gdf = make_scenic_geojson(UK_scenic_raw)
-    UK_gdf.to_file(UK_scenic_points)
-    rasterize_UK_outcome(UK_gdf, UK_scenic_raster, NUTS_UK)
-
-
-    # Digital Elevation model
-    from rural_beauty.config import DEM_EU, DEM_EU_range, DEM_EU_range_scaled
-    process_DEM(DEM_EU, DEM_EU_range, DEM_EU_range_scaled)
-
-
-    # OSM data
-    from rural_beauty.config import OSM_full_EU
-    from rural_beauty.config import powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled
-    from rural_beauty.config import streets_EU_vector, streets_EU_raster, streets_EU_raster_scaled
-    from rural_beauty.config import windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled
-
-    process_OSM_all(OSM_full_EU, 
-                    powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled, 
-                    streets_EU_vector, streets_EU_raster, streets_EU_raster_scaled, 
-                    windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled)
-
-
-    # clc
-    from rural_beauty.config import CLC_EU, CLC_boolean_layers_dir, CLC_coverage_EU_dir
-    from rural_beauty import split_CLC_layers
-
-    # split landcover data into separate tifs of "share of Landcover Class X per pixel"
-    split_CLC_layers.main(CLC_EU, CLC_boolean_layers_dir)
-
-
-    # rasterize to EU extent and 1kmx1km grid. 
-    subprocess.run(["bash", "scripts/resample_CLC_DE.sh", 
-                    CLC_boolean_layers_dir, CLC_coverage_EU_dir])
-
-
-    # Hemerobieindex
-    from rural_beauty.config import heme2012_DE, heme2012_DE_repojected
-    subprocess.run(["bash", "scripts/reproject_heme.sh", 
-                     heme2012_DE, heme2012_DE_repojected])
-
-
-    # Protected Areas
-    from rural_beauty.config import protected0, protected1, protected2, protected_EU, protected_raster, protected_raster_scaled
-
-    subprocess.run(["bash", "scripts/WDPA_subset_reproject.sh", 
-                protected0, protected1, protected2, protected_EU])
-    subprocess.run(["Rscript", "scripts/rasterize_protected_poly_geom_EU.R", 
-                protected_EU, protected_raster, protected_raster_scaled])
+def main(skip_DE= False,
+         skip_UK= False,
+         skip_DEM= False,
+         skip_OSM= False,
+         skip_CLC= False,
+         skip_Hemerobie= False,
+         skip_Protected= False,
+         skip_Neighborhood= False):
     
 
-    # Neighborhood Values
-    from rural_beauty import neighborhood_values
-    neighborhood_values.main()
+    if skip_DE:
+        print("Skipping Preprocessing of German Beauty/Scenic/Diversity")
+    # import paths to the German Beauty dataset and the output for the rasterization
+    else:
+        from rural_beauty.config import bild_vector_dir, bild_raster_dir # load absolute paths as defined in config.py
+        rasterize_DE_outcome(bild_vector_dir, bild_raster_dir)
+
+
+    if skip_UK:
+        print("Skipping Preprocessing of UK Scenic")
+    else:
+        # UK Scenic data
+        from rural_beauty.config import UK_scenic_raw, UK_scenic_points, UK_scenic_raster, NUTS_UK
+        UK_gdf = make_scenic_geojson(UK_scenic_raw)
+        UK_gdf.to_file(UK_scenic_points)
+        rasterize_UK_outcome(UK_gdf, UK_scenic_raster, NUTS_UK)
+
+
+    if skip_DEM:
+        print("Skipping Preprocessing of the Digital Elevation Model")
+    else:
+        # Digital Elevation model
+        from rural_beauty.config import DEM_EU, DEM_EU_range, DEM_EU_range_scaled
+        process_DEM(DEM_EU, DEM_EU_range, DEM_EU_range_scaled)
+
+
+    if skip_OSM:
+        print("Skipping Preprocessing of the Open Streetmap Data")
+    else:
+        # OSM data
+        from rural_beauty.config import OSM_full_EU
+        from rural_beauty.config import powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled
+        from rural_beauty.config import streets_EU_vector, streets_EU_raster, streets_EU_raster_scaled
+        from rural_beauty.config import windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled
+
+        process_OSM_all(OSM_full_EU, 
+                        powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled, 
+                        streets_EU_vector, streets_EU_raster, streets_EU_raster_scaled, 
+                        windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled)
+
+
+    if skip_CLC:
+        print("Skipping Preprocessing of Corine Landcover")
+    else:
+        # clc
+        from rural_beauty.config import CLC_EU, CLC_boolean_layers_dir, CLC_coverage_EU_dir
+        from rural_beauty import split_CLC_layers
+
+        # split landcover data into separate tifs of "share of Landcover Class X per pixel"
+        split_CLC_layers.main(CLC_EU, CLC_boolean_layers_dir)
+
+
+        # rasterize to EU extent and 1kmx1km grid. 
+        subprocess.run(["bash", "scripts/resample_CLC_DE.sh", 
+                        CLC_boolean_layers_dir, CLC_coverage_EU_dir])
+
+
+    if skip_Hemerobie:
+        print("Skipping Preprocessing of the Hemerobie index data")
+    else:
+        # Hemerobieindex
+        from rural_beauty.config import heme2012_DE, heme2012_DE_repojected
+        subprocess.run(["bash", "scripts/reproject_heme.sh", 
+                        heme2012_DE, heme2012_DE_repojected])
+
+    if skip_Protected:
+        print("Skipping Preprocessing of the Protected areas")
+    else:
+        # Protected Areas
+        from rural_beauty.config import protected0, protected1, protected2, protected_EU, protected_raster, protected_raster_scaled
+
+        subprocess.run(["bash", "scripts/WDPA_subset_reproject.sh", 
+                    protected0, protected1, protected2, protected_EU])
+        subprocess.run(["Rscript", "scripts/rasterize_protected_poly_geom_EU.R", 
+                    protected_EU, protected_raster, protected_raster_scaled])
+    
+    if skip_Neighborhood:
+        print("Skipping Creation of Neighborhood Layers")
+    else:
+        # Neighborhood Values
+        from rural_beauty import neighborhood_values
+        neighborhood_values.main()
 
 
 
@@ -207,4 +237,25 @@ def idw_interpolation(points, values, xi, yi, power=2):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Script to process various datasets.")
+    parser.add_argument('--skip_DE'    , action=argparse.BooleanOptionalAction)
+    parser.add_argument('--skip_UK'    , action=argparse.BooleanOptionalAction)
+    parser.add_argument('--skip_DEM'           , action=argparse.BooleanOptionalAction)
+    parser.add_argument('--skip_OSM'           , action=argparse.BooleanOptionalAction)
+    parser.add_argument('--skip_CLC'           , action=argparse.BooleanOptionalAction)
+    parser.add_argument('--skip_Hemerobie'     , action=argparse.BooleanOptionalAction)
+    parser.add_argument('--skip_Protected'     , action=argparse.BooleanOptionalAction)
+    parser.add_argument('--skip_Neighborhood'  , action=argparse.BooleanOptionalAction)
+
+    args = parser.parse_args()
+
+    main(
+        skip_DE          =args.skip_DE,
+        skip_UK          =args.skip_UK,
+        skip_DEM         =args.skip_DEM,
+        skip_OSM         =args.skip_OSM,
+        skip_CLC         =args.skip_CLC,
+        skip_Hemerobie   =args.skip_Hemerobie,
+        skip_Protected   =args.skip_Protected,
+        skip_Neighborhood=args.skip_Neighborhood
+        )
