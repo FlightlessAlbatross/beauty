@@ -20,20 +20,22 @@ from rasterio.features import geometry_mask
 # Beauty/Uniqueness/Diversity
 
 def main():
-    # # import paths to the German Beauty dataset and the output for the rasterization
-    # from rural_beauty.config import bild_vector_dir, bild_raster_dir # load absolute paths as defined in config.py
-    # rasterize_DE_outcome_todisc(bild_vector_dir, bild_raster_dir)
+    # import paths to the German Beauty dataset and the output for the rasterization
+    from rural_beauty.config import bild_vector_dir, bild_raster_dir # load absolute paths as defined in config.py
+    rasterize_DE_outcome(bild_vector_dir, bild_raster_dir)
 
 
-    # # UK Scenic data
-    # from rural_beauty.config import UK_scenic_raw, UK_scenic_points, UK_scenic_raster, NUTS_UK
-    # UK_gdf = make_scenic_geojson(UK_scenic_raw)
-    # UK_gdf.to_file(UK_scenic_points)
-    # rasterize_UK_outcome_todisc(UK_gdf, UK_scenic_raster, NUTS_UK)
+    # UK Scenic data
+    from rural_beauty.config import UK_scenic_raw, UK_scenic_points, UK_scenic_raster, NUTS_UK
+    UK_gdf = make_scenic_geojson(UK_scenic_raw)
+    UK_gdf.to_file(UK_scenic_points)
+    rasterize_UK_outcome(UK_gdf, UK_scenic_raster, NUTS_UK)
 
-    # # Digital Elevation model
-    # from rural_beauty.config import DEM_EU, DEM_EU_range, DEM_EU_range_scaled
-    # process_DEM_todisc(DEM_EU, DEM_EU_range, DEM_EU_range_scaled)
+
+    # Digital Elevation model
+    from rural_beauty.config import DEM_EU, DEM_EU_range, DEM_EU_range_scaled
+    process_DEM(DEM_EU, DEM_EU_range, DEM_EU_range_scaled)
+
 
     # OSM data
     from rural_beauty.config import OSM_full_EU
@@ -47,11 +49,44 @@ def main():
                     windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled)
 
 
+    # clc
+    from rural_beauty.config import CLC_EU, CLC_boolean_layers_dir, CLC_coverage_EU_dir
+    from rural_beauty import split_CLC_layers
+
+
+    # split landcover data into separate tifs of "share of Landcover Class X per pixel"
+    split_CLC_layers.main(CLC_EU, CLC_boolean_layers_dir)
+
+
+    # rasterize to EU extent and 1kmx1km grid. 
+    subprocess.run(["bash", "scripts/resample_CLC_DE.sh", 
+                    CLC_boolean_layers_dir, CLC_coverage_EU_dir])
+
+
+    # Hemerobieindex
+    from rural_beauty.config import heme2012_DE, heme2012_DE_repojected
+    subprocess.run(["bash", "scripts/reproject_heme.sh", 
+                     heme2012_DE, heme2012_DE_repojected])
+
+
+    # Protected Areas
+    from rural_beauty.config import protected0, protected1, protected2, protected_EU, protected_raster, protected_raster_scaled
+    print (protected0)
+
+    subprocess.run(["bash", "scripts/WDPA_subset_reproject.sh", 
+                protected0, protected1, protected2, protected_EU])
+    subprocess.run(["Rscript", "scripts/rasterize_protected_poly_geom_EU.R", 
+                protected_EU, protected_raster, protected_raster_scaled])
+
+
+
+
+
+
 def process_OSM_all(OSM_full_EU, 
                     powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled,
                     streets_EU_vector, streets_EU_raster, streets_EU_raster_scaled,
                     windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled):
-    
     """
     Process OSM data by running a series of shell and R scripts for powerlines, streets, and windpower.
     """
@@ -68,10 +103,7 @@ def process_OSM_all(OSM_full_EU,
     subprocess.run(['Rscript', 'scripts/rasterize_OSM_line_geom_EU.R', 
                 powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled])
     subprocess.run(['bash', 'scripts/rasterize_OSM_point_geom_EU.sh', 
-                windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled])
-    
-
-
+                windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled])   
 
 
 def make_scenic_geojson(UK_scenic_raw):
@@ -93,12 +125,12 @@ def make_scenic_geojson(UK_scenic_raw):
     return gdf
 
 
-def process_DEM_todisc(DEM_EU, DEM_EU_range, DEM_EU_range_scaled) -> None:
+def process_DEM(DEM_EU, DEM_EU_range, DEM_EU_range_scaled) -> None:
    subprocess.run(["bash", "scripts/process_dem_data_minmax_EU.sh",
                    DEM_EU, DEM_EU_range, DEM_EU_range_scaled])
 
 
-def rasterize_DE_outcome_todisc(bild_vector_dir, bild_raster_dir):
+def rasterize_DE_outcome(bild_vector_dir, bild_raster_dir):
 # Take every .shp file in the -i directory and rasterizes it into the -o direcory and adjusts the naming. 
     subprocess.run(["Rscript",
                     "scripts/rasterize_ratings.R",
@@ -108,7 +140,7 @@ def rasterize_DE_outcome_todisc(bild_vector_dir, bild_raster_dir):
     print(f"German Beauty/Uniqueness/Diversity rasterized and saved to: {bild_raster_dir}")
 
 
-def rasterize_UK_outcome_todisc(points_gdf, UK_scenic_raster, NUTS_UK) -> None:
+def rasterize_UK_outcome(points_gdf, UK_scenic_raster, NUTS_UK) -> None:
     # Load point data with values
     gdf = points_gdf
     points = np.array([(x, y) for x, y in zip(gdf.geometry.x, gdf.geometry.y)])
