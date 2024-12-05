@@ -8,7 +8,7 @@ from rural_beauty.config import CLC_coverage_EU_dir, DEM_EU_range_scaled, windpo
 from rural_beauty import blur_circular_disc
 
 
-def main(CLC_coverage_EU_dir):
+def main():
     layers = [item for item in  os.listdir(CLC_coverage_EU_dir) if item.endswith('.tif')]
     print(f"For the Neighborhood we consider {len(layers)} layers in {CLC_coverage_EU_dir}")
 
