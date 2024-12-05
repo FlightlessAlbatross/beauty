@@ -37,7 +37,7 @@ from imblearn.over_sampling import RandomOverSampler
 
 
 # todo make default values for model_class, number_classes, sampling_method
-def main(country, target_variable, model_class, sampling_method, number_classes, sugar, class_balance = 'asis') -> None:
+def main(country, target_variable, model_class, sampling_method, number_classes, sugar, tune_hyperparamters = False, class_balance = 'asis') -> None:
     """
     Main function for training and evaluating a machine learning model based on input parameters.
 
@@ -89,15 +89,15 @@ def main(country, target_variable, model_class, sampling_method, number_classes,
     # over/under sampling or keep it as is. 
     X_train_balanced, Y_train_balanced = cases_resample_data(X_train, Y_train, class_balance)
 
-    # select model
-    model = cases_assign_model_class(model_class)
 
-    hyperparameter_training = True
-    if hyperparameter_training:
-        results = hyperparameter_tuning(model_class, X_train, Y_train)
-        return results
+    if tune_hyperparamters:
+        model = hyperparameter_tuning(model_class, X_train, Y_train)
+
+    else:
+        # select model with default (tuned in the past) parameters
+        model = cases_assign_model_class(model_class)
+   
     
-
     # train model
     model.fit(X_train_balanced, Y_train_balanced)
 
@@ -160,21 +160,21 @@ def hyperparameter_tuning(model_class, X, y, cv=5):
     """
     # Define model and hyperparameter grid based on model class
     if model_class == "XGB":
-        model = XGBClassifier(use_label_encoder=False, eval_metric="logloss")
+        model = XGBClassifier(eval_metric="logloss")
         param_grid = {
-            "max_depth": [3, 5, 7],
-            "learning_rate": [0.01, 0.1, 0.2],
-            "n_estimators": [50, 100, 200],
-            "subsample": [0.8, 1.0],
+            "max_depth": [1,2,3, 5, 7],
+            "learning_rate": [0.02, 0.05, 0.1, 0.2],
+            "n_estimators": [25, 50, 100, 200, 400, 800],
+            "subsample": [0.2, 0.4, 0.6, 0.8, 1.0],
         }
-    elif model_class == "RF":
+    elif model_class == "RandomForestClassifier":
         model = RandomForestClassifier(random_state=42)
         param_grid = {
             "n_estimators": [50, 100, 200],
             "max_depth": [None, 10, 20],
-            "min_samples_split": [2, 5, 10],
+            "min_samples_split": [2, 5, 10, 20],
         }
-    elif model_class == "Tree":
+    elif model_class == "DecisionTreeClassifier":
         model = DecisionTreeClassifier(random_state=42)
         param_grid = {
             "max_depth": [None, 10, 20],
@@ -190,17 +190,26 @@ def hyperparameter_tuning(model_class, X, y, cv=5):
         param_grid=param_grid,
         scoring="accuracy",
         cv=cv,
-        verbose=2,
+        verbose=0,
         n_jobs=-1,  # Use all available cores
     )
+    print('Performing Cross Validation hyperparameter search...')
     grid_search.fit(X, y)
 
+    check_best_params_at_edges(grid_search.best_params_, param_grid)
+
+
+    cv = pd.DataFrame.from_dict(grid_search.cv_results_)
+    cvmax = cv['mean_test_score'].max()
+    cvmin = cv['mean_test_score'].min()
+    accuracy_range = cvmax - cvmin
+
+
+    print(f"The best parameters found in tuning: {grid_search.best_params_}")
+    print(f"It is {100*accuracy_range:.2f} %-points better than the worst: {100*cvmax:.2f}/{100*cvmin:.2f}")
+
     # Return the best parameters and best model
-    return {
-        "best_params": grid_search.best_params_,
-        "best_model": grid_search.best_estimator_,
-        "best_score": grid_search.best_score_,
-    }
+    return grid_search.best_estimator_
 
 
 
@@ -208,7 +217,27 @@ def get_model_parameters_RF(model, predictor_names):
     feature_importances = model.feature_importances_
     return pd.DataFrame({ 'Feature': predictor_names, 'Importance': feature_importances}).sort_values(by='Importance', ascending=False)
 
-   
+
+def check_best_params_at_edges(best_params, param_grid):
+    """
+    Check if any of the best parameters are at the edges of their respective grid.
+
+    Args:
+        best_params (dict): The best parameters from GridSearchCV.
+        param_grid (dict): The parameter grid used for hyperparameter tuning.
+
+    Returns:
+        None
+    """
+    for param, values in param_grid.items():
+        # Exclude None from min/max checks if present
+        non_none_values = [v for v in values if v is not None]
+
+        if best_params[param] is None:
+            print(f"Warning: Best value for '{param}' is None.")
+        elif best_params[param] == min(non_none_values) or best_params[param] == max(non_none_values):
+            print(f"Warning: Best value for '{param}' is at the edge of the grid: {best_params[param]}")
+
 
 
 # Plot and save confusion matrix with metrics
@@ -357,13 +386,14 @@ def cases_assign_model_class(model_class):
     """
     match (model_class):
         case ("RandomForestClassifier"):
-            model = RandomForestClassifier(max_depth=3, random_state=2024)
+            model = RandomForestClassifier(max_depth=5, random_state=2024)
         case ("XGB"):
-            model = XGBClassifier(tree_method="hist")
+            model = XGBClassifier(tree_method="hist", learning_rate = 0.1, max_depth = 5, n_estimators= 50, subsample= 0.5)
         case ("DecisionTreeClassifier"):
-            model = DecisionTreeClassifier(max_depth=3, random_state=2024)
+            model = DecisionTreeClassifier(max_depth=5, random_state=2024)
         case ("LinearRegression"):
-            LinearRegression()
+            raise ValueError ("Linear Regression is not yet implemented")
+            # model = LinearRegression()
         case _:
             raise ValueError ("NO valid model_class has been selected. Try RandomForestClassifier or XGB or SVC or DescisionTreeClassifier")
     return model
@@ -377,23 +407,25 @@ if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Train one of various ML models on preselected data for Germany or the UK")
 
-    parser.add_argument("country"         , type=str, choices=['DE', 'UK'], help="Country code ('DE', 'UK', or 'DEUK').")
-    parser.add_argument("target_variable" , type=str, choices=['scenic', 'beauty', 'unique', 'diverse'], help="Target variable (e.g., 'beauty', 'scenic').")
-    parser.add_argument("model_class"     , type=str, choices=['XGB', 'RandomForestClassifier', 'DecisionTreeClassifier'], help="Model class: RandomForestClassifier, TreeClassifier, XGB...")
-    parser.add_argument("sampling_method" , type=str, choices=['all_pixels', 'random_pixels', 'pooled_pixels_all_points', 'pooled_pixels_random_points'], help="Sampling method for data extraction used (e.g., 'all_pixels', 'random_pixels').")
-    parser.add_argument("number_classes"  , type=int, help="This sets the number of classes in the model. Fewer classes can be easier to predict")   
-    parser.add_argument("sugar"           , type=str, help="Any unique string to differentieate between models. This will be added to the output model folder name")
-    parser.add_argument("--class_balance" , type=str, default='asis', choices=['oversamping', 'asis'], help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
+    parser.add_argument("country"                 , type=str , choices=['DE', 'UK'], help="Country code ('DE', 'UK', or 'DEUK').")
+    parser.add_argument("target_variable"         , type=str , choices=['scenic', 'beauty', 'unique', 'diverse'], help="Target variable (e.g., 'beauty', 'scenic').")
+    parser.add_argument("model_class"             , type=str , choices=['XGB', 'RandomForestClassifier', 'DecisionTreeClassifier'], help="Model class: RandomForestClassifier, TreeClassifier, XGB...")
+    parser.add_argument("sampling_method"         , type=str , choices=['all_pixels', 'random_pixels', 'pooled_pixels_all_points', 'pooled_pixels_random_points'], help="Sampling method for data extraction used (e.g., 'all_pixels', 'random_pixels').")
+    parser.add_argument("number_classes"          , type=int , help="This sets the number of classes in the model. Fewer classes can be easier to predict")   
+    parser.add_argument("sugar"                   , type=str , help="Any unique string to differentieate between models. This will be added to the output model folder name")
+    parser.add_argument('--tune_hyperparameters'  , action=argparse.BooleanOptionalAction)
+    parser.add_argument("--class_balance"         , type=str , default='asis', choices=['oversamping', 'asis'], help="Oversampling repeats low freqency classes, asis uses the data as is, undersampling doesn't repeat any entries, but reduces the classes with too many")
     # Get arguments from command line
     args = parser.parse_args()
 
     # Run the main function with parsed arguments
     main(
-        country          = args.country,
-        target_variable  = args.target_variable,
-	    model_class      = args.model_class,
-        class_balance    = args.class_balance,
-        number_classes   = args.number_classes,
-        sugar            = args.sugar,
-        sampling_method  = args.sampling_method
+        country             = args.country,
+        target_variable     = args.target_variable,
+	    model_class         = args.model_class,
+        class_balance       = args.class_balance,
+        number_classes      = args.number_classes,
+        sugar               = args.sugar,
+        tune_hyperparamters = args.tune_hyperparameters,
+        sampling_method     = args.sampling_method
     )
