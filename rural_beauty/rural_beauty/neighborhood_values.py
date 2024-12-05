@@ -8,7 +8,7 @@ from rural_beauty.config import CLC_coverage_EU_dir, DEM_EU_range_scaled, windpo
 from rural_beauty import blur_circular_disc
 
 
-def main():
+def main(CLC_coverage_EU_dir):
     layers = [item for item in  os.listdir(CLC_coverage_EU_dir) if item.endswith('.tif')]
     print(f"For the Neighborhood we consider {len(layers)} layers in {CLC_coverage_EU_dir}")
 
@@ -93,6 +93,26 @@ def write_specific_zone_mean(input_dict:str) -> None:
                 with rasterio.open(output_path, 'w', **meta) as raster_out:
                     raster_out.write(output_array, 1)  # Write output array to the first band
 
+
+
+def modify_filename(file_path:str, add_string:str, new_folder:str) -> str:
+    # Split the filename and the extension
+    base, extension = os.path.splitext(file_path)
+
+    # Get directory and basename
+    dir_name, base_name = os.path.split(base)
+
+    # Add the string to the basename
+    new_base_name = f"{base_name}_{add_string}"
+
+    # Construct the new path
+    new_full_path = os.path.join(dir_name, new_folder, new_base_name + extension)
+
+    # Ensure the directory exists
+    new_directory = os.path.dirname(new_full_path)
+    os.makedirs(new_directory, exist_ok=True)
+
+    return new_full_path
 
 if __name__ == "__main__":
     main()
