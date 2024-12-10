@@ -110,7 +110,7 @@ def main(skip_DE= False,
         print("Skipping Creation of Neighborhood Layers")
     else:
         # Neighborhood Values
-        from rural_beauty import neighborhood_values
+        from rural_beauty import neighborhood_values_multithread as neighborhood_values
         neighborhood_values.main()
 
 
