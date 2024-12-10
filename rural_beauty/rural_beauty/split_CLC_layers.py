@@ -3,6 +3,8 @@ import os
 import numpy as np
 import sys
 
+from tqdm import tqdm # for progress bars. 
+
 def main(clc_path, output_folder):
     layers = {
         "code_stadt": 1,
@@ -70,8 +72,8 @@ def main(clc_path, output_folder):
         meta = src.meta.copy()
         meta['dtype'] = 'uint8'
         data = src.read(1)
-
-        for label, values in layers.items():
+        # for label, path in tqdm(features.items(), desc="Extracting explanatory raster values"):
+        for label, values in tqdm(layers.items(), desc="Splitting CLC Classes into separate tif files that are 0/1"):
             mask = np.zeros_like(data, dtype=bool)
             output_path = os.path.join(output_folder, f"{label}.tif")
             if os.path.exists(output_path):
