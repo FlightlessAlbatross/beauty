@@ -22,6 +22,7 @@ OUTPUT_TYPE="Float64"
 COMPRESS="LZW"
 PREDICTOR=2
 TILED="YES"
+# nodata value of the final output _scaled.tif
 NODATA_VALUE=-99
 
 
@@ -37,7 +38,7 @@ MIN_OUTFILE="$INTERMEDIARY_DIR/EU_DEM_EU_min.tif"
 if [ ! -f "$MAX_OUTFILE" ]; then
     echo "Generating maximum values raster..."
     
-    gdalwarp -te $WEST $SOUTH $EAST $NORTH -te_srs $EPSG_CODE -tap -tr $PIXEL_SIZE $PIXEL_SIZE -t_srs $EPSG_CODE -ot $OUTPUT_TYPE -r max -co "TILED=$TILED" $INFILE $MAX_OUTFILE
+    gdalwarp -te $WEST $SOUTH $EAST $NORTH -srcnodata -9999 -dstnodata -9999 -te_srs $EPSG_CODE -tap -tr $PIXEL_SIZE $PIXEL_SIZE -t_srs $EPSG_CODE -ot $OUTPUT_TYPE -r max -co "TILED=$TILED" $INFILE $MAX_OUTFILE
 else
     echo "$MAX_OUTFILE already exists. Skipping generation."
 fi
@@ -45,7 +46,7 @@ fi
 # Step 2: Generate Minimum Values Raster
 if [ ! -f "$MIN_OUTFILE" ]; then
     echo "Generating minimum values raster..."
-    gdalwarp -te $WEST $SOUTH $EAST $NORTH -te_srs $EPSG_CODE -tap -tr $PIXEL_SIZE $PIXEL_SIZE -t_srs $EPSG_CODE -ot $OUTPUT_TYPE -r min -co "TILED=$TILED" $INFILE $MIN_OUTFILE
+    gdalwarp -te $WEST $SOUTH $EAST $NORTH -srcnodata -9999 -dstnodata -9999 -te_srs $EPSG_CODE -tap -tr $PIXEL_SIZE $PIXEL_SIZE -t_srs $EPSG_CODE -ot $OUTPUT_TYPE -r min -co "TILED=$TILED" $INFILE $MIN_OUTFILE
 
 else
     echo "$MIN_OUTFILE already exists. Skipping generation."
