@@ -48,8 +48,8 @@ def get_target_variable_raster_path(country, target_variable = None) -> Path:
 
 
 ## Corine Land Cover
-CLC_EU = data_dir / 'raw' / 'clc' / 'U2018_CLC2018_V2020_20u1.tif'
-CLC_DE = data_dir / 'raw' / 'clc' / 'U2018_EU.tif'
+CLC_EU = data_dir / 'raw' / 'clc' / 'U2018_EU.tif'
+# CLC_DE = data_dir / 'raw' / 'clc' / 'U2018_DE.tif' # not in use. 
 
 ### Boolean layers folder
 CLC_boolean_layers_dir = data_dir / 'processed' / 'clc' / 'single_layers'
@@ -107,6 +107,8 @@ heme2012_DE_repojected = data_dir / 'cleaned' / 'hemerobie_IOER' / 'heme2012.tif
 
 #auxiliary data
 ## NUTS
+## TODO: we don't generate these from raw files, so when I start fresh with only the raw folder, these will be missing
+## either move them to raw, or generate them from raw into cleaned. 
 NUTS_DE = data_dir / 'cleaned' / 'NUTS' / 'DE.geojson'
 NUTS_EU = data_dir / 'cleaned' / 'NUTS' / 'EU.geojson'
 NUTS_UK = data_dir / 'cleaned' / 'NUTS' / 'UK_without_NI.geojson'
