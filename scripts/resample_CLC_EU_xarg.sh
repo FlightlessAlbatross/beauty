@@ -34,16 +34,16 @@ mkdir -p "$OUT_DIR"
 export OUT_DIR
 export overwrite
 
+echo CLC resampling to 1x1km grid starts with 4 threads using xargs. Existing Files are skipped....
 
 # Find all .tif files and process them with xargs
 find "$DIR" -name "*.tif" | xargs -P 4 -I {} bash -c '
     raster="{}"
-    out_raster="$OUT_DIR/$(basename "$raster")"
+    out_raster="$OUT_DIR/$(basename $raster)"
 
     # Check if the output file already exists and skip or overwrite based on the option provided
     if [ -f "$out_raster" ]; then
         if [ "$overwrite" -eq 0 ]; then
-            echo "File $out_raster already exists, skipping..."
             exit 0
         fi
     fi

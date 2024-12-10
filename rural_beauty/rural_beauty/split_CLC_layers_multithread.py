@@ -48,7 +48,7 @@ def parallel_process(clc_path, layers, output_folder, max_workers=4):
         # Use ThreadPoolExecutor for parallel execution
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             list(tqdm(executor.map(lambda args: process_layer(*args), tasks), 
-                      total=len(tasks), desc=f"Extract a CLC Class to a boolean layer with {max_workers} threads."))
+                      total=len(tasks), desc=f"Extract a CLC Class to a boolean layer with {max_workers} threads. Existing Files are skipped."))
 
 
 def main(clc_path, output_folder):
@@ -104,7 +104,7 @@ def main(clc_path, output_folder):
 
     os.makedirs(output_folder, exist_ok=True)
 
-    
+
     total_cores = psutil.cpu_count()
     cpu_usage = psutil.cpu_percent(interval=1)
     available_cores = max(1, int(total_cores * (1 - cpu_usage / 100.0)))
