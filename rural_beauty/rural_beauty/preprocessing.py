@@ -76,14 +76,14 @@ def main(skip_DE= False,
     else:
         # clc
         from rural_beauty.config import CLC_EU, CLC_boolean_layers_dir, CLC_coverage_EU_dir
-        from rural_beauty import split_CLC_layers
+        from rural_beauty import split_CLC_layers_multithread as split_CLC_layers
 
         # split landcover data into separate tifs of "share of Landcover Class X per pixel"
         split_CLC_layers.main(CLC_EU, CLC_boolean_layers_dir)
 
 
         # rasterize to EU extent and 1kmx1km grid. 
-        subprocess.run(["bash", "scripts/resample_CLC_DE.sh", 
+        subprocess.run(["bash", "scripts/resample_CLC_EU_xarg.sh", 
                         CLC_boolean_layers_dir, CLC_coverage_EU_dir])
 
 
@@ -137,12 +137,9 @@ def process_OSM_all(OSM_full_EU,
     ]
 
     commands_rasterize_osm = [
-        ['Rscript', 'scripts/rasterize_OSM_line_geom_EU.R', 
-                streets_EU_vector, streets_EU_raster, streets_EU_raster_scaled], 
-        ['Rscript', 'scripts/rasterize_OSM_line_geom_EU.R', 
-                powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled], 
-        ['bash', 'scripts/rasterize_OSM_point_geom_EU.sh', 
-                windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled]
+        ['Rscript', 'scripts/rasterize_OSM_line_geom_EU.R', streets_EU_vector, streets_EU_raster, streets_EU_raster_scaled], 
+        ['Rscript', 'scripts/rasterize_OSM_line_geom_EU.R', powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled], 
+        ['bash', 'scripts/rasterize_OSM_point_geom_EU.sh', windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled]
     ]
 
     with ThreadPoolExecutor(max_workers=3) as executor:  # Run up to 3 tasks concurrently
