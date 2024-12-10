@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 # Load required library
-library(terra)
+suppressPackageStartupMessages(library(terra))
 
 # Parse command line arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -18,6 +18,18 @@ output_path <- args[3]
 if (!file.exists(input_path)) {
   stop("Input file does not exist")
 }
+
+
+create_output_folder <- function(target_filepath){
+  # Extract the directory part of the output path
+  target_dir <- dirname(target_filepath)
+
+  # Create the directory if it doesn't exist
+  if (!dir.exists(target_dir)) {
+    dir.create(target_dir, recursive = TRUE)
+  }
+}
+
 
 # Define your own raster specifications
 xmin <- 29172876.762312
@@ -38,11 +50,12 @@ if (!file.exists(intermediary_path)) {
 
   # Load the vector data
   v <- vect(input_path)
-  print(paste0("Loaded OSM vector data:", input_path))
 
   # Rasterize the vector data onto the raster using the "length" attribute
-
   y <- rasterizeGeom(v, r, "area")
+
+  create_output_folder(intermediary_path)
+
   writeRaster(y, intermediary_path)
   print("Rasterizing done")
 } else {
@@ -51,17 +64,19 @@ if (!file.exists(intermediary_path)) {
 }
 
 max_area <- as.numeric(global(y, max, na.rm = TRUE))
-print(paste0("The maximum length of any pixel is ", max_area))
+# print(paste0("The maximum length of any pixel is ", max_area))
 
 
 y_norm <- y / max_area
-print("Scaling done. Write to disc....")
+# print("Scaling done. Write to disc....")
+
 
 # Save the resulting raster to a file
+create_output_folder(output_path)
 writeRaster(y_norm, output_path)
 
 if (file.exists(output_path)) {
   cat("Rasterization and scaling complete. Output saved to:", output_path, "\n")
 } else {
-  cat("unknown error no output created", "\n")
+  cat("error: no output created", "\n")
 }
