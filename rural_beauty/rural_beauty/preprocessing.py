@@ -31,7 +31,7 @@ def main(skip_DE= False,
     
 
     if skip_DE:
-        print("Skipping Preprocessing of German Beauty/Scenic/Diversity")
+        print("preprocessing.py: Skipping Preprocessing of German Beauty/Scenic/Diversity")
     # import paths to the German Beauty dataset and the output for the rasterization
     else:
         from rural_beauty.config import bild_vector_dir, bild_raster_dir # load absolute paths as defined in config.py
@@ -39,7 +39,7 @@ def main(skip_DE= False,
 
 
     if skip_UK:
-        print("Skipping Preprocessing of UK Scenic")
+        print("preprocessing.py: Skipping Preprocessing of UK Scenic")
     else:
         # UK Scenic data
         from rural_beauty.config import UK_scenic_raw, UK_scenic_points, UK_scenic_raster, NUTS_UK
@@ -49,7 +49,7 @@ def main(skip_DE= False,
 
 
     if skip_DEM:
-        print("Skipping Preprocessing of the Digital Elevation Model")
+        print("preprocessing.py: Skipping Preprocessing of the Digital Elevation Model")
     else:
         # Digital Elevation model
         from rural_beauty.config import DEM_EU, DEM_EU_range, DEM_EU_range_scaled
@@ -57,7 +57,7 @@ def main(skip_DE= False,
 
 
     if skip_OSM:
-        print("Skipping Preprocessing of the Open Streetmap Data")
+        print("preprocessing.py: Skipping Preprocessing of the Open Streetmap Data")
     else:
         # OSM data
         from rural_beauty.config import OSM_full_EU
@@ -72,7 +72,7 @@ def main(skip_DE= False,
 
 
     if skip_CLC:
-        print("Skipping Preprocessing of Corine Landcover")
+        print("preprocessing.py: Skipping Preprocessing of Corine Landcover")
     else:
         # clc
         from rural_beauty.config import CLC_EU, CLC_boolean_layers_dir, CLC_coverage_EU_dir
@@ -88,7 +88,7 @@ def main(skip_DE= False,
 
 
     if skip_Hemerobie:
-        print("Skipping Preprocessing of the Hemerobie index data")
+        print("preprocessing.py: Skipping Preprocessing of the Hemerobie index data")
     else:
         # Hemerobieindex
         from rural_beauty.config import heme2012_DE, heme2012_DE_repojected
@@ -96,7 +96,7 @@ def main(skip_DE= False,
                         heme2012_DE, heme2012_DE_repojected])
 
     if skip_Protected:
-        print("Skipping Preprocessing of the Protected areas")
+        print("preprocessing.py: Skipping Preprocessing of the Protected areas")
     else:
         # Protected Areas
         from rural_beauty.config import protected0, protected1, protected2, protected_EU, protected_raster, protected_raster_scaled
@@ -107,7 +107,7 @@ def main(skip_DE= False,
                     protected_EU, protected_raster, protected_raster_scaled])
     
     if skip_Neighborhood:
-        print("Skipping Creation of Neighborhood Layers")
+        print("preprocessing.py: Skipping Creation of Neighborhood Layers")
     else:
         # Neighborhood Values
         from rural_beauty import neighborhood_values_multithread as neighborhood_values
