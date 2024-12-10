@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 # Load required library
-library(terra)
+suppressPackageStartupMessages(library(terra))
 
 # Parse command line arguments
 args <- commandArgs(trailingOnly = TRUE)
