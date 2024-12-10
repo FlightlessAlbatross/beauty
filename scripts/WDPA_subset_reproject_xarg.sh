@@ -37,7 +37,7 @@ printf "%s\n" \
 xargs -P 3 -n 2 bash -c '
     subset=$1
     shp=$2
-    ogr2ogr -f "ESRI Shapefile" "$subset" "$shp" -spat 28929820 3125857 35822750 8343990 -where "MARINE <> '\''2'\''" -select MARINE,WDPA_PID,name
+    ogr2ogr -f "ESRI Shapefile" "$subset" "$shp" -spat 28929820 3125857 35822750 8343990 -where "MARINE <> '2'" -select MARINE,WDPA_PID,name
 ' _
 
 
