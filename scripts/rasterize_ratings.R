@@ -1,8 +1,7 @@
 # Load required libraries
 library(optparse)
 library(sf)
-library(terra)
-
+suppressPackageStartupMessages(library(terra))
 
 
 # Define command-line arguments
