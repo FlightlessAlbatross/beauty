@@ -101,7 +101,7 @@ def main(skip_DE= False,
         # Protected Areas
         from rural_beauty.config import protected0, protected1, protected2, protected_EU, protected_raster, protected_raster_scaled
 
-        subprocess.run(["bash", "scripts/WDPA_subset_reproject.sh", 
+        subprocess.run(["bash", "scripts/WDPA_subset_reproject_xarg.sh", 
                     protected0, protected1, protected2, protected_EU])
         subprocess.run(["Rscript", "scripts/rasterize_protected_poly_geom_EU.R", 
                     protected_EU, protected_raster, protected_raster_scaled])
