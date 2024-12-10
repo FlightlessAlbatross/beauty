@@ -15,6 +15,8 @@ from scipy.spatial import cKDTree   # To interpoloate the UK data to all pixels.
 from rasterio.transform import from_origin
 from rasterio.features import geometry_mask
 
+from concurrent.futures import ThreadPoolExecutor
+
 
 # Beauty/Uniqueness/Diversity
 
@@ -123,20 +125,37 @@ def process_OSM_all(OSM_full_EU,
     """
     Process OSM data by running a series of shell and R scripts for powerlines, streets, and windpower.
     """
-    
-    subprocess.run(['bash', 'scripts/osm_extract_streets.sh', 
-                OSM_full_EU, streets_EU_vector])
-    subprocess.run(['bash', 'scripts/osm_extract_powerlines.sh', 
-                OSM_full_EU, powerlines_EU_vector])
-    subprocess.run(['bash', 'scripts/osm_extract_windpower.sh', 
-                OSM_full_EU, windpower_EU_vector])
-    
-    subprocess.run(['Rscript', 'scripts/rasterize_OSM_line_geom_EU.R', 
-                streets_EU_vector, streets_EU_raster, streets_EU_raster_scaled])
-    subprocess.run(['Rscript', 'scripts/rasterize_OSM_line_geom_EU.R', 
-                powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled])
-    subprocess.run(['bash', 'scripts/rasterize_OSM_point_geom_EU.sh', 
-                windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled])   
+
+    # Function to run a single subprocess. used for multithreding 
+    def run_subprocess(command):
+        return subprocess.run(command)
+
+    commands_extract_osm = [
+    ['bash', 'scripts/osm_extract_streets.sh'   , OSM_full_EU, streets_EU_vector],
+    ['bash', 'scripts/osm_extract_powerlines.sh', OSM_full_EU, powerlines_EU_vector],
+    ['bash', 'scripts/osm_extract_windpower.sh' ,  OSM_full_EU, windpower_EU_vector]
+    ]
+
+    commands_rasterize_osm = [
+        ['Rscript', 'scripts/rasterize_OSM_line_geom_EU.R', 
+                streets_EU_vector, streets_EU_raster, streets_EU_raster_scaled], 
+        ['Rscript', 'scripts/rasterize_OSM_line_geom_EU.R', 
+                powerlines_EU_vector, powerlines_EU_raster, powerlines_EU_raster_scaled], 
+        ['bash', 'scripts/rasterize_OSM_point_geom_EU.sh', 
+                windpower_EU_vector, windpower_EU_raster, windpower_EU_raster_scaled]
+    ]
+
+    with ThreadPoolExecutor(max_workers=3) as executor:  # Run up to 3 tasks concurrently
+        futures = [executor.submit(run_subprocess, cmd) for cmd in commands_extract_osm]
+        # Wait for all tasks to complete
+        for future in futures:
+            future.result()
+
+    with ThreadPoolExecutor(max_workers=3) as executor:  # Run up to 3 tasks concurrently
+        futures = [executor.submit(run_subprocess, cmd) for cmd in commands_rasterize_osm]
+        # Wait for all tasks to complete
+        for future in futures:
+            future.result()
 
 
 def make_scenic_geojson(UK_scenic_raw):
