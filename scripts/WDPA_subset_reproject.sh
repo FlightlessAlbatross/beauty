@@ -12,7 +12,6 @@ shp1="$2"
 shp2="$3"
 output_vector="$4"
 
-output_epsg=4647
 
 # Define output paths for intermediate results
 subset0="data/processed/protected/WDPA0.shp"
