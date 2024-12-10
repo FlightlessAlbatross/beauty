@@ -32,18 +32,15 @@ fi
 
 # Step 2: Find Maximum Value in the  Raster
 MAX_RANGE=$(gdalinfo -mm $amounts_raster | grep "Computed Min/Max" | sed 's/.*Max=//' | awk '{print $1}')
-echo "Maximum Range: $MAX_RANGE"
 
 MIN_VALUE=$(echo $MAX_RANGE|awk -F, '{print $1}')
 MAX_VALUE=$(echo $MAX_RANGE|awk -F, '{print $2}')
 
-echo "Max value: $MAX_VALUE"
-
 
 # Step 3: Normalize the Range to 0-1 by dividing by the maximum value
 if [ ! -f "$raster_output" ]; then
-  echo "Scaling OSM raster to 0,1"
   gdal_translate -ot Float64 -scale 0 $MAX_VALUE 0 1 $amounts_raster $raster_output 
+  echo "Scaling OSM points done. Output: $raster_output "
 else
     echo "$raster_output already exists. Skipping generation."
 fi

@@ -2,8 +2,54 @@ import rasterio
 import os
 import numpy as np
 import sys
-
+from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm # for progress bars. 
+import psutil # to check available free cores. 
+
+
+def process_layer(label, values, data, meta, output_folder):
+    """
+    Process a single layer: create a binary mask and save it as a separate file.
+    """
+    mask = np.zeros_like(data, dtype=bool)
+    output_path = os.path.join(output_folder, f"{label}.tif")
+    if os.path.exists(output_path):
+        return
+
+    # Create mask
+    if isinstance(values, list):
+        for value in values:
+            mask |= (data == value)
+    elif isinstance(values, int):
+        mask |= (data == values)
+    else:
+        print(f"{label} has faulty values, should be list or int")
+        return
+
+    output_data = mask.astype(np.uint8)
+
+    # Write output raster
+    with rasterio.open(output_path, 'w', **meta) as out_rst:
+        out_rst.write(output_data, 1)
+
+
+def parallel_process(clc_path, layers, output_folder, max_workers=4):
+    with rasterio.open(clc_path) as src:
+        meta = src.meta.copy()
+        meta['dtype'] = 'uint8'
+        data = src.read(1)
+
+        # Prepare arguments for parallel processing
+        tasks = [
+            (label, values, data, meta, output_folder)
+            for label, values in layers.items()
+        ]
+
+        # Use ThreadPoolExecutor for parallel execution
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            list(tqdm(executor.map(lambda args: process_layer(*args), tasks), 
+                      total=len(tasks), desc=f"Extract a CLC Class to a boolean layer with {max_workers} threads. Existing Files are skipped."))
+
 
 def main(clc_path, output_folder):
     layers = {
@@ -56,47 +102,16 @@ def main(clc_path, output_folder):
         "code_geholz": [15, 16, 23, 24, 25, 29]
     }
 
-    relevant_4_beauty = ['code_obst',
-                     'code_wald',
-                     'code_natgru',
-                     'code_heide',
-                     "code_acker",
-                     "code_stoer",
-                     "code_spfr",
-                     "code_noveg", 
-                     "code_seemee"]
-
     os.makedirs(output_folder, exist_ok=True)
 
-    with rasterio.open(clc_path) as src:
-        meta = src.meta.copy()
-        meta['dtype'] = 'uint8'
-        data = src.read(1)
-        # for label, path in tqdm(features.items(), desc="Extracting explanatory raster values"):
-        for label, values in tqdm(layers.items(), desc="Splitting CLC Classes into separate tif files that are 0/1"):
-            mask = np.zeros_like(data, dtype=bool)
-            output_path = os.path.join(output_folder, f"{label}.tif")
-            if os.path.exists(output_path):
-                continue
 
-            # Check if label is not in relevant_4_beauty
-            if label not in relevant_4_beauty:
-                # this gets ignored right now. Change this to 'continue' from 'next' if you want only the listed layers. 
-                pass
+    total_cores = psutil.cpu_count()
+    cpu_usage = psutil.cpu_percent(interval=1)
+    available_cores = max(1, int(total_cores * (1 - cpu_usage / 100.0)))
+    max_workers = min(available_cores, 8)
 
-            if isinstance(values, list):
-                for value in values:
-                    mask |= (data == value)
-            elif isinstance(values, int):
-                mask |= (data == values)
-            else:
-                print(f"{label} has faulty values, should be list or int")
-                continue
+    parallel_process(clc_path, layers, output_folder, max_workers=max_workers)
 
-            output_data = mask.astype(int)
-
-            with rasterio.open(output_path, 'w', **meta) as out_rst:
-                out_rst.write(output_data, 1)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:

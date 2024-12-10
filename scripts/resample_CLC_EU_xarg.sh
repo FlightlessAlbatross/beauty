@@ -30,21 +30,26 @@ OUT_DIR="$2"
 # Create output directory if it doesn't exist
 mkdir -p "$OUT_DIR"
 
-# Loop through all TIFF files in the directory
-for raster in "$DIR"/*.tif; do
-    # Define output file path
-    out_raster="$OUT_DIR"/$(basename "$raster")
-    
+# Export variables for use in subshells (required for xargs)
+export OUT_DIR
+export overwrite
+
+echo CLC resampling to 1x1km grid starts with 4 threads using xargs. Existing Files are skipped....
+
+# Find all .tif files and process them with xargs
+find "$DIR" -name "*.tif" | xargs -P 4 -I {} bash -c '
+    raster="{}"
+    out_raster="$OUT_DIR/$(basename $raster)"
+
     # Check if the output file already exists and skip or overwrite based on the option provided
     if [ -f "$out_raster" ]; then
         if [ "$overwrite" -eq 0 ]; then
-            echo "File $out_raster already exists, skipping..."
-            continue
+            exit 0
         fi
     fi
 
     # Run gdalwarp to resample the raster to 1000x1000 using mean aggregation
-    gdalwarp -te 32280000 5235000 32922000 6102000 -te_srs "EPSG:4647" -tap -tr 1000 1000 -t_srs "EPSG:4647" -ot float64 -r average $( [ "$overwrite" -eq 1 ] && echo "-overwrite" ) "$raster" "$out_raster"
-done
-
-echo "Resampling complete."
+    # use -q to be quiet. 
+    gdalwarp -q -te 28929820 3125857 35822750 8343990 -srcnodata 48 -dstnodata 48 -te_srs "EPSG:4647" -tap -tr 1000 1000 -t_srs "EPSG:4647" -ot float64 -r average $( [ "$overwrite" -eq 1 ] && echo "-overwrite" ) $raster $out_raster
+'
+echo CLC resampling to 1x1km grid complete.
