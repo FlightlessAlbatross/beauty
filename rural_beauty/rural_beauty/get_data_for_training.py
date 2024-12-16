@@ -29,13 +29,54 @@ from rural_beauty.config import (
 
 
 def main(country: str, target_variable: str, sampling_method: str, overwrite:bool = True) -> None:
-    '''
-    This function extracts data from the UK or DE. 
-    It consolidates multiple oder scripts that do similar things, 
-    03_get_all_points_from_layers_DE, 03_get_points_from_layers_DE, 03_get_points_from_layers_UK
+    """
+        Extracts raster data for a specified country and sampling method to create tabular data for machine learning workflows.
+        note that overwrite has no function yet. 
 
-    It creates a folder in data / models / __extracted_points / {country} / {sampling} / 
-    '''
+        Parameters:
+        ----------
+        country : str
+            The country code ('DE', 'UK', or 'DEUK') for which data is extracted.
+        target_variable : str
+            The target variable to extract (e.g., 'beauty', 'scenic').
+        sampling_method : str
+            The sampling method to use:
+            - 'all_pixels': Extracts all raster values within the boundary polygon.
+            - 'random_pixels': Randomly samples raster values within the boundary polygon.
+            - 'pooled_pixels_random_points': For UK only, uses a random subset of predefined points.
+            - 'pooled_pixels_all_points': For UK only, uses all predefined points.
+        overwrite : bool, optional
+            Whether to overwrite existing output files (default is True).
+
+        Outputs:
+        --------
+        Saves the following files to `data/models/__extracted_points/{country}/{sampling}/`:
+            - `coords.csv`: Contains the sampled point coordinates.
+            - `predictors.csv`: Contains the explanatory variables from the raster layers.
+            - `outcome.csv`: Contains the extracted target variable values.
+            - `features.json`: A JSON file listing the paths to the raster layers used.
+
+        Raises:
+        -------
+        ValueError:
+            - If the combination of country and sampling method is unsupported.
+            - If extraction points are not properly generated during processing.
+
+        Workflow:
+        ---------
+        1. Validate input paths and retrieve relevant raster and polygon data.
+        2. Generate sampling points based on the chosen method and country.
+        3. Extract target variable values and predictors for those points.
+        4. Save the results as CSV files and record metadata.
+
+        Examples:
+        ---------
+        Extract raster data for Germany (DE) with 'all_pixels' sampling:
+        >>> main("DE", "beauty", "all_pixels")
+
+        Extract data for the UK with random sampling of predefined points:
+        >>> main("UK", "scenic", "pooled_pixels_random_points")
+        """
     # setup path import library
     config_module = importlib.import_module("rural_beauty.config")
     
