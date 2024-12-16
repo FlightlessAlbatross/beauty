@@ -50,6 +50,8 @@ cache
 .ppt
 .pptx
 
+# logfile
+logfile.txt
 
 # Data folders for size
 data/*
