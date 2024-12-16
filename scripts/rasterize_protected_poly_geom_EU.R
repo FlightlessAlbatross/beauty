@@ -19,6 +19,12 @@ if (!file.exists(input_path)) {
   stop("Input file does not exist")
 }
 
+if (file.exists(output_path)) {
+  cat("Protected Area output file already exists at: ", output_path, "\n")
+  quit(status = 0)
+}
+
+
 
 create_output_folder <- function(target_filepath){
   # Extract the directory part of the output path
@@ -63,20 +69,14 @@ if (!file.exists(intermediary_path)) {
   y <- rast(intermediary_path)
 }
 
+
 max_area <- as.numeric(global(y, max, na.rm = TRUE))
-# print(paste0("The maximum length of any pixel is ", max_area))
-
-
 y_norm <- y / max_area
-# print("Scaling done. Write to disc....")
 
 
 # Save the resulting raster to a file
 create_output_folder(output_path)
-writeRaster(y_norm, output_path)
+writeRaster(y_norm, output_path, overwrite = TRUE)
 
-if (file.exists(output_path)) {
-  cat("Rasterization and scaling complete. Output saved to:", output_path, "\n")
-} else {
-  cat("error: no output created", "\n")
-}
+
+
