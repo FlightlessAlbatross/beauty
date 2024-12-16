@@ -31,18 +31,33 @@ from rural_beauty.config import data_dir, models_dir, get_extracted_points_paths
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 
-def subset_normalize_and_align_rasters(raster_paths:dict, output_paths:dict) -> None: 
+def create_predictive_layers_folder(boundary_path:Path) -> Path:
+    """
+    Create a folder for the aligned layers (as will be created by subset_normalize_and_align_rasters) based on the boundary_path filename. 
+    """
+    boundary_basename  = Path(boundary_path).stem
+  
+    predictive_layers_folder = data_dir / 'forprediction' / boundary_basename
+    predictive_layers_folder.mkdir(parents=True, exist_ok=True)
+    return predictive_layers_folder
+
+
+
+def subset_normalize_and_align_rasters(raster_paths:dict, output_folder:Path) -> None: 
     """
     Subset all rasters to the largest common area among inputs,
     align them to the same resolution and extent, and normalize the data.
 
     Args:
     - raster_paths (dict): Dictionary of variable names and file paths to the input rasters.
-    - output_paths (dict): Dictionary of variable names and output file paths to save the processed rasters.
+    - output_folder (Path): Folder to save the aligned raster.
 
     Returns:
     - None
     """
+
+    # Create output paths dictionary
+    output_paths = {var:output_folder / f"{raster_path.name}" for var, raster_path in raster_paths.items()}
 
     # Open all rasters and get their bounds
     bounds_list = []
@@ -116,6 +131,7 @@ def subset_normalize_and_align_rasters(raster_paths:dict, output_paths:dict) -> 
 
                     # Write the normalized data to the output file
                     dst.write(reprojected_data, i)
+    return output_paths
 
 
 # Function to read and check for values outside the valid range in predictor GeoTIFFs
@@ -133,7 +149,7 @@ def check_invalid_values(predictor_paths):
                 print(f"Warning: {var_name} contains values too small for dtype 'float32'.")
 
 
-# Function to create a prediction GeoTIFF within a specified polygon
+# Function to create a prediction GeoTIFF from a trained model and aligned input features. 
 def create_prediction_geotiff(model, predictor_paths, output_raster_path, polygon_gdf):
     """
     Generate a prediction GeoTIFF using a trained RandomForest model and a set of predictor rasters,
@@ -206,7 +222,7 @@ def parse_folder_name(model_basename):
     return country, target_variable, sampling_method, model_class, class_balance, sugar, number_classes
 
 
-def print_tif_shapes(raster_paths):
+def print_tif_shapes(raster_paths:dict) -> None:
     sizes = []
     for varname, path in raster_paths.items():
         with rasterio.open(path) as src:
@@ -221,48 +237,61 @@ def print_tif_shapes(raster_paths):
     
     print(min(sizes))
 
-def main(model_folder):
-    model_folder = Path(model_folder)
-    model_basename = os.path.basename(model_folder)
-   
-    country, target_variable, sampling_method, model_class, class_balance, sugar, number_classes = parse_folder_name(model_basename)
 
-    # print(f"Country: {country}")
-    # print(f"Target Variable: {target_variable}")
-    # print(f"Sampling Method: {sampling_method}")
-    # print(f"Model Class: {model_class}")
-    # print(f"Class Balance: {class_balance}")
-    # print(f"Number of Classes: {number_classes}")
-    # print(f"Sugar: {sugar}")
+def read_boundary_polygon(boundary_path:Path) -> gpd:
+    """
+    Reads a boundary polygon file and ensures the geometry is valid for predictions.
 
-    # Check if the Model folder exists. 
-    if not os.path.exists(models_dir / model_basename):
-        raise ValueError(f"Invalid argument: The model directory '{models_dir / model_basename}' does not exist. Have you run this exact model?")
-    
-    # get the raster data we trained with.
-    _, _, coords_path, feature_paths = get_extracted_points_paths(country, target_variable, sampling_method)
+    Args:
+        boundary_path (str): Path to the boundary file (e.g., Shapefile, GeoJSON).
 
+    Returns:
+        geopandas.GeoDataFrame: A GeoDataFrame with a single unified geometry.
 
-    model_path = model_folder / 'model.pkl'
+    Raises:
+        ValueError: If the file has no valid geometry or cannot be read.
+    """
+    # Attempt to read the file using GeoPandas
+    try:
+        boundary_gpd = gpd.read_file(boundary_path)
+    except Exception as e:
+        raise ValueError(f"Error reading boundary file: {e}")
 
-    output_raster_path = model_folder / 'prediction.tif'
+    # Ensure the file contains a geometry column
+    if 'geometry' not in boundary_gpd.columns:
+        raise ValueError(f"The boundary file does not contain a 'geometry' column: {boundary_path}")
 
-    # TODO change to from config import NUTS_EU
-    boundary_gpd_path = data_dir / 'cleaned' / 'NUTS' / 'EU_main.geojson'
-    # load boundary polygon
-    boundary_gpd  = gpd.read_file(boundary_gpd_path)
-    # We add a buffer to ensure prediction of coastal areas. 
-    # optional TODO add check that CRS is in meters
-    boundary_gpd.geometry  = boundary_gpd.geometry.buffer(10000)
+    # Combine all polygons into a single geometry
+    if len(boundary_gpd) > 1:
+        unified_geometry = boundary_gpd.unary_union
+        boundary_gpd = gpd.GeoDataFrame(geometry=[unified_geometry], crs=boundary_gpd.crs)
 
-    # load the model, the scaling and the significant coefficients. 
+    # Ensure geometry is valid
+    boundary_gpd = boundary_gpd[boundary_gpd.geometry.notnull()]
+    if boundary_gpd.empty:
+        raise ValueError("No valid geometry found in the boundary file.")
+
+    return boundary_gpd
+
+def load_model(model_path):
+    """
+    Handle errors when joblib loading. 
+    Return the model if everything worked. 
+    """
     try:
         model = joblib.load(model_path)
     except FileNotFoundError:
         raise FileNotFoundError(f"Model file not found at {model_path}. Ensure the model is trained and the file exists.")
+    except ValueError as e:
+        raise ValueError(f"Invalid model format in {model_path}: {e}")
+    except Exception as e:
+        # Catch-all for unforeseen errors, but log them for debugging
+        raise RuntimeError(f"Unexpected error while loading model from {model_path}: {e}")
+    
+    return model
 
 
-    # Load the features paths dict
+def load_features(feature_paths)->dict:
     try:
         with open(feature_paths, 'r') as input_file:
             feature_filepaths = json.load(input_file)
@@ -270,42 +299,83 @@ def main(model_folder):
     except FileNotFoundError:
         raise FileNotFoundError(f"Feature paths file not found at {feature_paths}.")
 
-    significant_filepaths = feature_filepaths
-    del significant_filepaths['hemero_1']
+    del feature_filepaths['hemero_1']
 
-    # New base directory for the adjusted rasters
-    new_base_dir =  data_dir / 'forprediction' / 'EU'
+    return feature_filepaths
 
-    new_base_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create new list of file paths for the adjusted rasters
-    adjusted_raster_paths = {var:new_base_dir / f"{raster_path.name}" for var, raster_path in significant_filepaths.items()}
+def main(model_folder: str, boundary_path: str):
+    """
+    Performs predictions within a specified boundary using a trained model and aligned raster data.
+
+    Args:
+        model_folder (str): Path to the folder containing the trained model and metadata.
+        boundary_path (str): Path to the boundary file (e.g., Shapefile, GeoJSON) for the prediction region.
+
+    Outputs:
+        - GeoTIFF file of predictions saved in the model folder.
+        """
     
-    # print_tif_shapes(significant_filepaths)
+    model_folder = Path(model_folder)
+    model_basename = os.path.basename(model_folder)
+    model_path = model_folder / 'model.pkl'
+    output_raster_path = model_folder / 'prediction.tif'
+
+    # In this folder we save aligned rasters of equal size and resolution for seamless predictions.
+    # if the folder doesn't exist already it is created first. 
+    predictive_layers_folder = create_predictive_layers_folder(boundary_path)
+   
+    country, target_variable, sampling_method, _, _, _, _ = parse_folder_name(model_basename)
     
-    subset_normalize_and_align_rasters(significant_filepaths, adjusted_raster_paths)
+    # Check if the Model folder exists. 
+    if not os.path.exists(models_dir / model_basename):
+        raise ValueError(f"Invalid argument: The model directory '{models_dir / model_basename}' does not exist. Have you run this exact model?")
     
-    check_invalid_values({'dem_1': significant_filepaths['dem_1']})
+    # get the raster data we trained with.
+    _, _, _, feature_paths = get_extracted_points_paths(country, target_variable, sampling_method)
+
+    # load boundary polygon
+    boundary_gpd = read_boundary_polygon(boundary_path)
+    # We add a buffer to ensure prediction of coastal areas. 
+    # optional TODO add check that CRS is in meters
+    boundary_gpd.geometry = boundary_gpd.geometry.buffer(10000)
+
+    # load the model, the scaling and the significant coefficients. 
+    model = load_model(model_path)
+
+
+
+    # Load the features paths dict
+    significant_filepaths = load_features(feature_paths)
+
+    adjusted_raster_paths = subset_normalize_and_align_rasters(significant_filepaths, output_folder=predictive_layers_folder)
+
+    check_invalid_values(adjusted_raster_paths)
     
     create_prediction_geotiff(model, adjusted_raster_paths, output_raster_path, boundary_gpd)
-    
+
+
 
 if __name__ == "__main__":
     # Set up argument parsing
-    parser = argparse.ArgumentParser(description="Script to predict EU from a model folder")
+    parser = argparse.ArgumentParser(description="Script to predict values within a specific boundary using a trained model.")
     
     # Add arguments
     parser.add_argument(
         "model_folder",
         type=str,
-        help="example: data/models/DE__unique__random_pixels__XGB__asis__7_271124"
+        help="Path to the folder containing the trained model and metadata (e.g., data/models/DE__unique__random_pixels__XGB__asis__7_271124)."
     )
-
+    parser.add_argument(
+        "boundary_path",
+        type=str,
+        help="Path to the boundary file (e.g., Shapefile or GeoJSON) for the prediction region."
+    )
     
     # Parse arguments
     args = parser.parse_args()
     
     # Pass arguments to main function
-    main(args.model_folder)
+    main(args.model_folder, args.boundary_path)
 
     
