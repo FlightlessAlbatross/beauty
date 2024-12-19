@@ -149,6 +149,7 @@ def main(country: str, target_variable: str, sampling_method: str, overwrite:boo
     # extract features for the same locations. 
     predictors_dict = {}
     for label, path in tqdm(features.items(), desc="Extracting explanatory raster values"):
+        
         predictors_dict[label] = extract_raster_values_from_points(path, extraction_points)
 
     # Ensure the directory exists
