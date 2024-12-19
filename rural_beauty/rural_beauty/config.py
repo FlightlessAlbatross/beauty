@@ -179,9 +179,7 @@ BFN_features_beauty = {
  'heide_1'  : CLC_coverage_EU_dir / 'code_heide.tif',
  'weanl_1_4': data_dir / 'cleaned/osm/neighborhood/freq_scaled_windpowerplants_EU_4647_zone1_4.tif', 
  'stra_1_2' : data_dir / 'cleaned/osm/neighborhood/len_scaled_streets_EU_4647_zone1_2.tif', 
- 'leit_1'   : powerlines_EU_raster_scaled, 
- 'hemero_1' : heme2012_DE_repojected
-           }
+ 'leit_1'   : powerlines_EU_raster_scaled           }
 
 BFN_features_scenic = BFN_features_beauty
 
@@ -210,7 +208,6 @@ BFN_features_diverse = {
  'natgru_2' : CLC_coverage_EU_dir / 'neighborhood/code_natgru_zone_2.tif',
  'obst_1_4' : CLC_coverage_EU_dir / 'neighborhood/code_obst_zone_1_4.tif',
  'stoer_1_2': CLC_coverage_EU_dir / 'neighborhood/code_stoer_zone1_2.tif',
- 'hemero_1' : heme2012_DE_repojected, 
  'stra_1_2' : data_dir / 'cleaned/osm/neighborhood/len_scaled_streets_EU_4647_zone_1_2.tif', 
  'acker_1_4': CLC_coverage_EU_dir / 'neighborhood/code_acker_zone1_4.tif',
  'noveg_2'  : CLC_coverage_EU_dir / 'neighborhood/code_noveg_zone_2.tif', 
