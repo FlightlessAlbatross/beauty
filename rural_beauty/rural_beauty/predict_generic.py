@@ -299,8 +299,6 @@ def load_features(feature_paths)->dict:
     except FileNotFoundError:
         raise FileNotFoundError(f"Feature paths file not found at {feature_paths}.")
 
-    del feature_filepaths['hemero_1']
-
     return feature_filepaths
 
 
@@ -357,6 +355,9 @@ def main(model_folder: str, boundary_path: str):
 
 
 if __name__ == "__main__":
+
+
+
     # Set up argument parsing
     parser = argparse.ArgumentParser(description="Script to predict values within a specific boundary using a trained model.")
     
