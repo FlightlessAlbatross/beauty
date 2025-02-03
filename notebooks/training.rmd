@@ -1,0 +1,210 @@
+---
+title: "Modeling"
+author: 
+  - name: "Martin Hofer" 
+    affiliation: "International Institute for Applied Systems Analysis (IIASA)"
+    affiliation-url: "https://iiasa.ac.at/"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: sandstone
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    toc_title: "Summary"
+    code_folding: show
+    smooth_scroll: true
+    highlight: tango
+fontsize: 0.9em
+editor_options: 
+  chunk_output_type: console
+---
+
+# Modeling beauty
+```{r,}
+library(ggplot2)
+library(knitr)
+library(leaflet)
+library(terra)
+library(viridisLite)
+```
+
+## OLS Reference model
+
+The original model is ordinary least squares, so naturally, our first attempt at replicating the model also uses OLS. We don’t have all the details as to how the data was transformed and or scaled, so our model does look a bit different than the reference model. However, the parameters do show the expected signs and magnitudes. The bigger issue with using OLS is that its linear nature predicts outside the response’s training data distribution. In particular, the elevation change layer sees values in non-Germany Europe that are much higher than what the model was trained on in Germany. This leads to skewed predictions.
+
+## Trees in a Random Forest
+
+To rectify this issue, we went with a classification approach over a regression. The classification method we use is based on decision trees.
+
+Decision trees are a simple tool for making predictions. They work by repeatedly splitting the data into smaller groups based on conditions that maximize separation between outcomes. Each split is determined by a threshold in one of the input variables, creating a branching structure that ultimately leads to a prediction. 
+These thresholds can deal well with the elevation problem described, and they are well established for predictive tasks like this one. 
+This intuitive structure makes decision trees easy to interpret and well-suited for handling non-linear relationships in the data.
+One flipside of switching to a classification structure from a regression one, is class balance.
+If, in an extreme case, no observation (1km pixel in this case) of a certain class is in the training data, the prediction won’t either.
+This is still true in a less extreme case, where sparse classes with very few observations can be hard to predict as the model has not seen many examples of which features point to that class. 
+
+Below we depict the class distribution of beauty classes for Germany, our training data. 
+
+```{r, echo=FALSE, fig.align='center'}
+tabular_beauty_data_DE_path <- "../data/models/__extracted_points/DE/beauty/all_pixels/outcome.csv"
+
+data <- read.csv(tabular_beauty_data_DE_path)
+
+ggplot(data, aes(x = factor(value))) + geom_bar(aes(y = ..prop.., group = 1), fill = 'steelblue', color = 'black') + 
+  scale_x_discrete(name = "Beauty Class", ) + 
+  scale_y_continuous(labels = function(x) paste0( round(100*x, 2) , " %" ) ) +
+  theme_minimal(base_size = 15)
+```
+
+We can see that our classes follow a nice bell curve. This is by design from our reference paper. We might run into issues with the infrequent 1,2,8 and 9 classes. To rectify this we first, combine the most extreme classes together and end up with only 7 classes. The second approach we try is to over-samplee the extreme classes so that in the training data they show up with the same frequency as the others. We show the effects of this measure on the predictive power below. 
+
+
+Below is an example of a small trained decision tree. It depicts the decisions the tree makes. Starting from the top and hugging the right side, it looks at the feature "wald_1_4", which is the share of the landcover that is forests in the location and its neighborhood up to 10km. If the share is sufficiently large (the threshold 0.233) we go right and check "dem_3", which is the elevation range in the neighborhood of 2 to 5 km. If this is also sufficiently large, the tree checks again, if the same elevation range is also higher than this new threshold we end up at class 9. The most beautiful class.
+
+```{r, echo=FALSE, fig.align='center'}
+knitr::include_graphics("img/tree_structure_beauty.png")
+```
+
+
+## Agreeable trees
+
+A simple tree model like the one above cannot describe the variance of landscape beauty fully. We can improve on that by using an ensemble of decision trees, each looking similar to the one above. Instead of training just one tree, we draw different subsets from the data and train many trees on these slightly different datasets (this is called bagging). The final prediction is then based on the consensus of this multitude of trees. This method of predicting is called Random Forest.
+
+There are many additional parameters one can set and model design improvements one can make to refine this idea of ensemble decision trees. We can decide how many branches the trees should have, how many trees in our forest, and how to draw the subsets. These decisions are called hyperparameters.
+
+Another technique we apply is called boosting, where the trees are trained in sequence. The newer trees then learn from what worked for the older trees.
+
+A priori, it is not clear which of these are best suited for the data. Since our main goal is predictive power and not model inference, we can apply cross-validation. Cross-validation is essentially a systematic trial-and-error process where we pick the best-performing mix of hyperparameters and design. Our selection criterion is the out-of-sample predictive power. Out-of-sample means that we set aside a portion of the data and train the model without this portion. Then we can use this data we set aside to see how our predictions compare. For speed considerations the code cell is set to not evaluate. 
+
+
+```{python, eval=FALSE}
+from rural_beauty import training_model        # the function to train any model
+
+countries = ['DE']
+# for the target variable the choice depends on the country so we set up a dictionary. 
+target_variables = {'DE': 'beauty', 'UK': 'scenic'}
+sampling_methods = {'DE': 'all_pixels', 'UK': 'pooled_pixels_all_points'}
+model_classes = ['XGB', 'RandomForestClassifier', 'DecisionTreeClassifier']	
+class_balances = ['asis', 'oversampling']
+number_classes   = 7
+sugar            = str(number_classes) + '_'+ '191224' # this value is added to the output's folder name to prevent overwriting of similar models. 
+
+# the results are both stored in new folders in the models directory, but also the results are stored in 
+# a logfile at data/models/logfile.txt
+
+for country in countries:
+  for model_class in model_classes:
+    for class_balance in class_balances:
+        training_model.main(country          = country,
+                            target_variable  = target_variables[country],
+                            model_class      = model_class,
+                            sampling_method  = sampling_methods[country],
+                            class_balance    = class_balance,
+                            sugar            = sugar,
+                            number_classes   = number_classes, 
+                            tune_hyperparamters = True)
+```
+
+Here is a shortlist of the models we have trained and their respective accuracies. 
+We can see that the oversampling has no benefits for this predictive task, and that the more complex models slighlty outperform the simpler models. The difference between the Random Forest model and the the boosted (XGB) random forest are negligable. If computational efficiency becomes a concern, switching to the slighlthly worse Random Forest model might be a consideration. The specifications of this task (mostly the spatial resolution of the predictive layer) do not warrent this. XGB is fast enough and slightly more predictive.  
+
+```{r,}
+read_logfile <- function(path){
+# Load the text data
+lines <- readLines(path)
+
+# Parse the lines into a data.frame
+results <- do.call(rbind, lapply(lines, function(line) {
+  # Extract the model information and metrics from the logfile produced by prep_train_predict.ipynb
+  model_info <- sub("Model: (.*?),.*", "\\1", line)
+  metrics <- sub(".*Accuracy: ([0-9.]+), F1: ([0-9.]+), Kendalls Tau: ([0-9.]+)", "\\1,\\2,\\3", line)
+  
+  # Split the model information into components
+  model_parts <- unlist(strsplit(model_info, "__"))
+  metric_values <- as.numeric(unlist(strsplit(metrics, ",")))
+  c(model_parts, metric_values)
+}))
+
+# Convert to a data.frame and name the columns
+results_df <- as.data.frame(results, stringsAsFactors = FALSE)
+colnames(results_df) <- c("country", "target_variable", "sampling_method", "model_type", "class_balance", "sugar", 
+                          "accuracy", "F1", "KendallsTau")
+
+# Convert the metrics to numeric, as they are encoded as text in the logfile. 
+results_df$accuracy <- as.numeric(results_df$accuracy)
+results_df$F1 <- as.numeric(results_df$F1)
+results_df$KendallsTau <- as.numeric(results_df$KendallsTau)
+results_df
+}
+
+
+keep_cols <- c('target_variable', 'model_type', 'class_balance', 'KendallsTau')
+
+incountry_test <- read_logfile("../data/models/logfile.txt")
+incountry_test <- incountry_test[incountry_test$country == 'DE' &  incountry_test$sampling_method == 'all_pixels' ,]
+
+
+forplot <- incountry_test[,keep_cols]
+
+# kable plots nice tables for markdown files. 
+kable(forplot[,keep_cols], format = "html")
+
+
+# decide model type
+ggplot(forplot[forplot$class_balance == 'asis',]) + geom_bar(aes(x = model_type, y = KendallsTau, fill = model_type), stat = 'identity', position = 'dodge') + theme_bw()
+```
+
+After these learnings we can predict the rest of the European Union using the model trained on the German modeled data. The code below can predict all the models we trained above by adding to the lists model_classes and class_balances. Again, for speed considerations the code cell is set to not evaluate. 
+
+
+```{python, eval=FALSE}
+from rural_beauty import predict_generic
+from rural_beauty.config import NUTS_EU
+
+countries = ['DE']
+# for the target variable the choice depends on the country so we set up a dictionary. 
+target_variables = {'DE': 'beauty', 'UK': 'scenic'}
+sampling_methods = {'DE': 'all_pixels', 'UK': 'pooled_pixels_all_points'}
+model_classes = ['XGB']	
+class_balances = ['asis']
+number_classes   = 7
+sugar            = str(number_classes) + '_'+ '191224' # this value is added to the output's folder name to prevent overwriting of similar models. 
+
+for country in countries:
+    for model_class in model_classes:
+        for class_balance in class_balances:
+            target_variable = target_variables[country]
+            sampling_method = sampling_methods[country]
+            model_basename = f"{country}__{target_variable}__{sampling_method}__{model_class}__{class_balance}__{sugar}" 
+            model_folder   = models_dir / model_basename
+
+            if os.path.exists(model_folder / 'prediction.tif'):
+                print(f"skipping {model_basename}. Prediction already exists")
+                continue
+              
+            predict_generic.main(model_folder, NUTS_EU)
+
+
+```
+
+Finally we can have a look at out outputs. Below you can explore the predictions of the best performing model. 
+
+
+```{r}
+
+
+beauty_path <- '../data/models/DE__beauty__all_pixels__XGB__asis__7_191224/prediction.tif'
+raster_layer <- rast(beauty_path)
+raster_layer <- project(raster_layer, "EPSG:3857")
+
+pal <- colorNumeric(viridis(256), domain = values(raster_layer), na.color = "transparent")
+
+
+leaflet() %>%
+  addTiles() %>%
+  addRasterImage(raster_layer, colors = pal, opacity = 0.7) %>%  
+  addLegend(pal = pal, values = values(raster_layer), title = "Intensity")
+
+```
+
