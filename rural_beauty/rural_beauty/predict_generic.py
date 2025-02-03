@@ -167,11 +167,14 @@ def create_prediction_geotiff(model, predictor_paths, output_raster_path, polygo
     nodata_value = -99
 
     with rasterio.open(list(predictor_paths.values())[0]) as src:
+        print(f"Input Raster CRS: {src.crs}")  # Debugging step
+
         profile = src.profile
         profile.update(
             dtype=rasterio.float32,
-            count=1,  # single band for prediction
-            nodata=nodata_value  # Set the nodata value for the output
+            count=1,
+            nodata=nodata_value,
+            crs=src.crs
         )
 
         # Convert the polygon to the same CRS as the raster
