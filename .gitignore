@@ -50,6 +50,11 @@ cache
 .ppt
 .pptx
 
+# hide markdown files and data for markdown files
+notebooks/training_files/*
+notebooks/img/*
+notebooks/*.html
+
 # logfile
 logfile.txt
 
